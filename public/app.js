@@ -4,6 +4,7 @@
 
 const state = {
   user: null,
+  theme: localStorage.getItem('notevault_theme') || 'light',
   folders: [],
   notes: [],
   activeNoteId: null,
@@ -17,6 +18,20 @@ const state = {
   isRecording: false,
   chatHistory: []
 };
+
+function applyTheme(themeName) {
+  state.theme = themeName === 'dark' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', state.theme);
+  localStorage.setItem('notevault_theme', state.theme);
+  const icon = document.getElementById('theme-toggle-icon');
+  if (icon) {
+    icon.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+  }
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) {
+    btn.title = state.theme === 'dark' ? 'Passer en Mode Clair (Blanc)' : 'Passer en Mode Sombre (Noir)';
+  }
+}
 
 // =============================================================================
 // UTILITAIRES & MARKDOWN PARSER AVEC WIKILINKS [[...]]
@@ -94,6 +109,7 @@ function renderMarkdown(mdText) {
 // INITIALISATION & VÉRIFICATION PARTAGE PUBLIC / SSO
 // =============================================================================
 document.addEventListener('DOMContentLoaded', async () => {
+  applyTheme(state.theme);
   const params = new URLSearchParams(window.location.search);
   const shareToken = params.get('share');
   const authError = params.get('auth_error');
@@ -605,9 +621,37 @@ async function createNewNote(overrides = {}) {
 // GESTIONNAIRES D'ÉVÉNEMENTS
 // =============================================================================
 function bindEvents() {
-  // Toggle sidebar
-  document.getElementById('btn-toggle-sidebar')?.addEventListener('click', () => {
-    document.getElementById('left-sidebar').classList.toggle('hidden');
+  // Bascule Mode Clair (Blanc) / Sombre (Noir)
+  document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+    const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
+    applyTheme(nextTheme);
+    showToast(nextTheme === 'dark' ? '🌙 Mode Sombre (Noir) activé' : '☀️ Mode Clair (Blanc) activé');
+  });
+
+  // Toggle sidebar (Desktop: hidden / Mobile: drawer coulissant)
+  const sidebar = document.getElementById('left-sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+
+  function closeMobileSidebar() {
+    sidebar?.classList.remove('open');
+    backdrop?.classList.remove('active');
+  }
+
+  function toggleMobileSidebar() {
+    if (window.innerWidth <= 920) {
+      sidebar?.classList.toggle('open');
+      backdrop?.classList.toggle('active', sidebar?.classList.contains('open'));
+    } else {
+      sidebar?.classList.toggle('hidden');
+    }
+  }
+
+  document.getElementById('btn-toggle-sidebar')?.addEventListener('click', toggleMobileSidebar);
+  backdrop?.addEventListener('click', closeMobileSidebar);
+
+  // Bouton retour mobile dans la note pour revenir à la liste
+  document.getElementById('btn-mobile-back')?.addEventListener('click', () => {
+    document.getElementById('view-editor')?.classList.remove('mobile-viewing-note');
   });
 
   // Switcher de vues (Markdown / Keep / Kanban)
@@ -618,6 +662,7 @@ function bindEvents() {
       state.activeView = btn.dataset.view;
       document.querySelectorAll('.stage-view').forEach(v => v.classList.remove('active'));
       document.getElementById(`view-${state.activeView}`)?.classList.add('active');
+      if (window.innerWidth <= 920) closeMobileSidebar();
     });
   });
 
@@ -629,6 +674,7 @@ function bindEvents() {
       state.filterType = item.dataset.filter;
       state.filterValue = null;
       renderAll();
+      if (window.innerWidth <= 920) closeMobileSidebar();
     });
   });
 
@@ -641,6 +687,7 @@ function bindEvents() {
     state.filterType = 'folder';
     state.filterValue = li.dataset.folderId;
     renderAll();
+    if (window.innerWidth <= 920) closeMobileSidebar();
   });
 
   // Nouveau dossier
@@ -705,6 +752,9 @@ function bindEvents() {
     state.activeNoteId = card.dataset.noteId;
     renderNotesList();
     renderActiveNoteEditor();
+    if (window.innerWidth <= 768) {
+      document.getElementById('view-editor')?.classList.add('mobile-viewing-note');
+    }
   });
 
   // Édition des champs de la note active
@@ -1325,7 +1375,11 @@ function switchToEditorView() {
     b.classList.toggle('active', b.dataset.view === 'editor');
   });
   document.querySelectorAll('.stage-view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-editor')?.classList.add('active');
+  const editorView = document.getElementById('view-editor');
+  editorView?.classList.add('active');
+  if (window.innerWidth <= 768 && state.activeNoteId) {
+    editorView?.classList.add('mobile-viewing-note');
+  }
 }
 
 function openModal(id) {

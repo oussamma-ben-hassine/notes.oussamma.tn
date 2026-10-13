@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>NoteVault AI — Notes Markdown, Keep & Kanban | oussamma.tn</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -141,6 +141,10 @@
           💬 <span>Cortex IA</span>
         </button>
 
+        <button id="btn-theme-toggle" class="icon-btn theme-toggle-btn" title="Basculer Mode Clair (Blanc) / Sombre (Noir)">
+          <span id="theme-toggle-icon">🌙</span>
+        </button>
+
         <div class="user-profile-pill" id="user-profile-pill">
           <span class="user-avatar" id="user-avatar">O</span>
           <span class="user-name" id="user-name">Oussama</span>
@@ -160,6 +164,9 @@
         <div id="ai-search-matches" class="ai-search-matches"></div>
       </div>
     </div>
+
+    <!-- OVERLAY BACKDROP POUR MOBILE -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop hidden"></div>
 
     <!-- CORPS DE L'APPLICATION -->
     <div class="workspace-body">
@@ -245,6 +252,7 @@
               <!-- En-tête métadonnées de la note -->
               <div class="note-meta-bar">
                 <div class="note-title-row">
+                  <button id="btn-mobile-back" class="icon-btn mobile-back-btn" title="Retour à la liste des notes">←</button>
                   <input type="text" id="note-emoji-input" class="emoji-input" maxlength="4" value="📝" title="Changer l'icône" />
                   <input type="text" id="note-title-input" class="title-input" placeholder="Titre de la note..." />
                 </div>

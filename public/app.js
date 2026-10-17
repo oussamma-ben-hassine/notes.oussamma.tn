@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadNotes();
     bindEvents();
+    connectUserLiveSSE();
 
     // Si l'utilisateur est arrivé via un lien de collaboration : ?collab=TOKEN
     if (collabToken) {
@@ -405,7 +406,7 @@ function scheduleModalAutoSave() {
   if (indicator) indicator.textContent = '⏳ Enregistrement...';
 
   if (state.saveTimeout) clearTimeout(state.saveTimeout);
-  state.saveTimeout = setTimeout(saveModalNoteNow, 400);
+  state.saveTimeout = setTimeout(saveModalNoteNow, 200);
 }
 
 async function saveModalNoteNow() {
@@ -458,6 +459,9 @@ async function saveModalNoteNow() {
 // =============================================================================
 // SYNCHRONISATION MULTI-PERSONNES EN TEMPS RÉEL (SSE)
 // =============================================================================
+// =============================================================================
+// SYNCHRONISATION MULTI-PERSONNES EN TEMPS RÉEL (SSE)
+// =============================================================================
 function connectLiveCollabSSE(collabToken) {
   disconnectLiveCollabSSE();
 
@@ -472,6 +476,8 @@ function connectLiveCollabSSE(collabToken) {
       const idx = state.notes.findIndex(n => n.id === updatedNote.id);
       if (idx >= 0) {
         state.notes[idx] = { ...state.notes[idx], ...updatedNote };
+      } else {
+        state.notes.unshift(updatedNote);
       }
 
       // Si l'utilisateur a actuellement cette note ouverte dans le modal
@@ -480,9 +486,27 @@ function connectLiveCollabSSE(collabToken) {
         const titleInput = document.getElementById('edit-note-title');
         const contentInput = document.getElementById('edit-note-content');
 
-        // Mettre à jour seulement si l'utilisateur n'est pas en train d'écrire activement
-        if (document.activeElement !== titleInput) titleInput.value = updatedNote.title || '';
-        if (document.activeElement !== contentInput) contentInput.value = updatedNote.content || '';
+        // Mettre à jour le titre s'il a changé
+        if (titleInput && updatedNote.title !== undefined && titleInput.value !== updatedNote.title) {
+          const isFocused = (document.activeElement === titleInput);
+          const start = titleInput.selectionStart;
+          const end = titleInput.selectionEnd;
+          titleInput.value = updatedNote.title || '';
+          if (isFocused) {
+            try { titleInput.setSelectionRange(start, end); } catch (e) {}
+          }
+        }
+
+        // Mettre à jour le contenu avec préservation précise du curseur
+        if (contentInput && updatedNote.content !== undefined && contentInput.value !== updatedNote.content) {
+          const isFocused = (document.activeElement === contentInput);
+          const start = contentInput.selectionStart;
+          const end = contentInput.selectionEnd;
+          contentInput.value = updatedNote.content || '';
+          if (isFocused) {
+            try { contentInput.setSelectionRange(start, end); } catch (e) {}
+          }
+        }
 
         applyModalCardColor(updatedNote.color || 'default');
         updateColorDots('modal-keep-card', updatedNote.color || 'default');
@@ -490,9 +514,9 @@ function connectLiveCollabSSE(collabToken) {
 
         const statusEl = document.getElementById('collab-status-text');
         if (statusEl && data.updatedBy) {
-          statusEl.textContent = `Modifié à l'instant par ${data.updatedBy}`;
+          statusEl.textContent = `⚡ Modifié en direct par ${data.updatedBy}`;
         }
-        setTimeout(() => { state.isRemoteUpdating = false; }, 200);
+        setTimeout(() => { state.isRemoteUpdating = false; }, 150);
       }
 
       renderAllNotes();
@@ -519,6 +543,55 @@ function disconnectLiveCollabSSE() {
     state.sseConnection.close();
     state.sseConnection = null;
   }
+}
+
+// Connexion globale continue pour synchroniser toutes les cartes et notes partagées
+function connectUserLiveSSE() {
+  if (state.userSseConnection) {
+    state.userSseConnection.close();
+  }
+  const es = new EventSource('/api/user/live');
+  state.userSseConnection = es;
+
+  es.addEventListener('note_updated', e => {
+    try {
+      const data = JSON.parse(e.data);
+      const updatedNote = data.note;
+      if (!updatedNote || !updatedNote.id) return;
+
+      const idx = state.notes.findIndex(n => n.id === updatedNote.id);
+      if (idx >= 0) {
+        state.notes[idx] = { ...state.notes[idx], ...updatedNote };
+      } else {
+        state.notes.unshift({ ...updatedNote, isSharedWithMe: true });
+      }
+
+      // Si le modal est ouvert sur cette note et qu'aucun flux collab dédié n'est branché
+      if (state.editingNoteId === updatedNote.id && !state.sseConnection) {
+        state.isRemoteUpdating = true;
+        const titleInput = document.getElementById('edit-note-title');
+        const contentInput = document.getElementById('edit-note-content');
+        if (titleInput && titleInput.value !== updatedNote.title) {
+          titleInput.value = updatedNote.title || '';
+        }
+        if (contentInput && contentInput.value !== updatedNote.content) {
+          contentInput.value = updatedNote.content || '';
+        }
+        applyModalCardColor(updatedNote.color || 'default');
+        updateColorDots('modal-keep-card', updatedNote.color || 'default');
+        renderEditModalChecklist(updatedNote);
+        setTimeout(() => { state.isRemoteUpdating = false; }, 150);
+      }
+
+      renderAllNotes();
+    } catch (err) {
+      console.error('Erreur traitement event user live:', err);
+    }
+  });
+
+  es.onerror = () => {
+    console.warn('Flux SSE utilisateur en reconnexion...');
+  };
 }
 
 function updateCollaboratorAvatars(collabs) {

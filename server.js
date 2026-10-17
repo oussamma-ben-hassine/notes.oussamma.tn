@@ -313,7 +313,20 @@ app.post('/api/notes', requireAuth, (req, res) => {
 app.put('/api/notes/:id', requireAuth, (req, res) => {
   try {
     const userId = getUserId(req);
-    const saved = Storage.saveNote(userId, { ...req.body, id: req.params.id });
+    const user = req.session?.user;
+    const saved = Storage.saveNote(userId, { ...req.body, id: req.params.id }, user);
+    
+    // Si la note a un lien de collaboration actif, diffuser l'événement
+    if (saved.collabToken) {
+      notifyCollabClients(saved.collabToken, 'note_updated', {
+        note: saved,
+        updatedBy: user ? (user.name || user.email) : 'Collaborateur'
+      });
+      notifyUsersNoteUpdated(saved, 'note_updated', {
+        updatedBy: user ? (user.name || user.email) : 'Collaborateur'
+      });
+    }
+    
     res.json(saved);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -348,8 +361,12 @@ app.get('/api/collab/:token', requireAuth, (req, res) => {
   }
   // Notifier tous les participants connectés via SSE
   notifyCollabClients(token, 'participant_joined', {
-    user: { name: user.name || user.email, email: user.email },
+    user: { name: user?.name || user?.email, email: user?.email },
     collaborators: result.note.collaborators
+  });
+  // Notifier aussi le propriétaire et autres participants que la note a un nouveau collaborateur
+  notifyUsersNoteUpdated({ ...result.note, ownerId: result.ownerId }, 'note_updated', {
+    updatedBy: user ? (user.name || user.email) : 'Nouveau collaborateur'
   });
   res.json(result);
 });
@@ -363,19 +380,45 @@ app.put('/api/collab/:token', requireAuth, (req, res) => {
     if (!result) {
       return res.status(404).json({ error: 'Note introuvable' });
     }
-    // Diffuser la modification en temps réel à tous les collaborateurs connectés
+    const updatedNoteWithMeta = { ...result.note, ownerId: result.ownerId };
+
+    // Diffuser la modification en direct au flux de la note ouverte
     notifyCollabClients(token, 'note_updated', {
-      note: result.note,
+      note: updatedNoteWithMeta,
       updatedBy: user ? (user.name || user.email) : 'Collaborateur'
     });
+
+    // Diffuser également au flux général de chaque utilisateur participant
+    notifyUsersNoteUpdated(updatedNoteWithMeta, 'note_updated', {
+      updatedBy: user ? (user.name || user.email) : 'Collaborateur'
+    });
+
     res.json(result);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// SSE (Server-Sent Events) pour la synchronisation en temps réel de la note
+// =============================================================================
+// SYNCHRONISATION MULTI-UTILISATEURS EN TEMPS RÉEL (SSE)
+// =============================================================================
 const collabSseClients = new Map(); // token => Set of res
+const userSseClients = new Map();   // userId => Set of res
+
+// Keep-alive ping toutes les 15 secondes pour empêcher Traefik / Nginx de fermer ou bufferiser les connexions SSE
+setInterval(() => {
+  const pingPayload = `: ping\n\n`;
+  for (const [, clients] of collabSseClients) {
+    for (const client of clients) {
+      try { client.write(pingPayload); } catch (e) { clients.delete(client); }
+    }
+  }
+  for (const [, clients] of userSseClients) {
+    for (const client of clients) {
+      try { client.write(pingPayload); } catch (e) { clients.delete(client); }
+    }
+  }
+}, 15000);
 
 function notifyCollabClients(token, eventType, data) {
   const clients = collabSseClients.get(token);
@@ -384,6 +427,7 @@ function notifyCollabClients(token, eventType, data) {
     for (const client of clients) {
       try {
         client.write(payload);
+        if (typeof client.flush === 'function') client.flush();
       } catch (e) {
         clients.delete(client);
       }
@@ -391,6 +435,34 @@ function notifyCollabClients(token, eventType, data) {
   }
 }
 
+// Diffuser un événement de note à tous les utilisateurs concernés (propriétaire et collaborateurs)
+function notifyUsersNoteUpdated(note, eventType, extraData = {}) {
+  const targetUserIds = new Set();
+  if (note.ownerId) targetUserIds.add(String(note.ownerId));
+  if (Array.isArray(note.collaborators)) {
+    for (const c of note.collaborators) {
+      if (c.id) targetUserIds.add(String(c.id));
+      if (c.email) targetUserIds.add(String(c.email));
+    }
+  }
+
+  const payload = `event: ${eventType}\ndata: ${JSON.stringify({ note, ...extraData })}\n\n`;
+  for (const uid of targetUserIds) {
+    const clients = userSseClients.get(uid);
+    if (clients) {
+      for (const client of clients) {
+        try {
+          client.write(payload);
+          if (typeof client.flush === 'function') client.flush();
+        } catch (e) {
+          clients.delete(client);
+        }
+      }
+    }
+  }
+}
+
+// Flux SSE dédié à une note collaborative ouverte
 app.get('/api/collab/:token/live', requireAuth, (req, res) => {
   const token = req.params.token;
   const user = req.session?.user;
@@ -399,9 +471,11 @@ app.get('/api/collab/:token/live', requireAuth, (req, res) => {
     return res.status(404).end('Note not found');
   }
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
+  // En-têtes critiques pour désactiver le buffering Traefik / Coolify / Nginx
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
 
   if (!collabSseClients.has(token)) {
@@ -417,6 +491,49 @@ app.get('/api/collab/:token/live', requireAuth, (req, res) => {
     if (clients) {
       clients.delete(res);
       if (clients.size === 0) collabSseClients.delete(token);
+    }
+  });
+});
+
+// Flux SSE global pour l'utilisateur connecté (reçoit les mises à jour des notes partagées & cartes)
+app.get('/api/user/live', requireAuth, (req, res) => {
+  const userId = String(getUserId(req));
+  const user = req.session?.user;
+
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.flushHeaders?.();
+
+  if (!userSseClients.has(userId)) {
+    userSseClients.set(userId, new Set());
+  }
+  userSseClients.get(userId).add(res);
+
+  // Si l'utilisateur a un email distinct de son ID, enregistrer aussi par email
+  if (user?.email && String(user.email) !== userId) {
+    const emailKey = String(user.email);
+    if (!userSseClients.has(emailKey)) {
+      userSseClients.set(emailKey, new Set());
+    }
+    userSseClients.get(emailKey).add(res);
+  }
+
+  res.write(`event: connected\ndata: ${JSON.stringify({ status: 'ok', userId })}\n\n`);
+
+  req.on('close', () => {
+    const clients = userSseClients.get(userId);
+    if (clients) {
+      clients.delete(res);
+      if (clients.size === 0) userSseClients.delete(userId);
+    }
+    if (user?.email && String(user.email) !== userId) {
+      const emailClients = userSseClients.get(String(user.email));
+      if (emailClients) {
+        emailClients.delete(res);
+        if (emailClients.size === 0) userSseClients.delete(String(user.email));
+      }
     }
   });
 });

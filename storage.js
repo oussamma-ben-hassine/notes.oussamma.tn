@@ -18,7 +18,36 @@ function readDB() {
   try {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
-      return JSON.parse(raw);
+      const db = JSON.parse(raw);
+      let modified = false;
+
+      // Nettoyage automatique de toutes les anciennes données de test/démo
+      const demoNoteIds = new Set([
+        'note_ecosystem_arch',
+        'note_roadmap_q4',
+        'note_devops_snippets',
+        'note_ai_ideas',
+        'note_meeting_template'
+      ]);
+
+      if (db && db.users) {
+        for (const uid of Object.keys(db.users)) {
+          const userSpace = db.users[uid];
+          if (Array.isArray(userSpace.notes)) {
+            const initialCount = userSpace.notes.length;
+            userSpace.notes = userSpace.notes.filter(n => !demoNoteIds.has(n.id));
+            if (userSpace.notes.length !== initialCount) {
+              modified = true;
+            }
+          }
+        }
+      }
+
+      if (modified) {
+        fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+      }
+
+      return db;
     }
   } catch (err) {
     console.error('Erreur lecture notes_store.json:', err.message);

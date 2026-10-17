@@ -1,105 +1,106 @@
 /* =============================================================================
-   NOTEVAULT AI (notes.oussamma.tn) — GOOGLE DESIGN (LIGHT BY DEFAULT / DARK THEME)
-   Inspiré de Google Material Design 3, Google Keep, Google Docs & Workspace
-   100% Responsive (Mobile, Tablette, Desktop)
+   NOTEVAULT AI (notes.oussamma.tn) — ECOSYSTEM DESIGN THEME (oussamma.tn)
+   Clean, modern, responsive interface matching oussamma.tn & Collify Hub
+   Font: Plus Jakarta Sans | Palette: Slate 50-950 & Royal Blue 600
    ============================================================================= */
 
 :root,
 html[data-theme="light"] {
   --color-scheme: light;
 
-  /* Google Light Palette */
-  --bg-base: #f8fafd;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f1f3f4;
-  --bg-hover: #e8eaed;
-  --border-subtle: #dadce0;
-  --border-focus: #1a73e8;
+  /* oussamma.tn & Collify Light Palette */
+  --bg-base: #f8fafc;        /* slate-50 */
+  --bg-surface: #ffffff;     /* pure white */
+  --bg-elevated: #f1f5f9;    /* slate-100 */
+  --bg-hover: #e2e8f0;       /* slate-200 */
+  --border-subtle: #e2e8f0;  /* slate-200 */
+  --border-focus: #2563eb;   /* blue-600 */
 
-  --text-primary: #202124;
-  --text-secondary: #5f6368;
-  --text-muted: #80868b;
+  --text-primary: #0f172a;   /* slate-900 */
+  --text-secondary: #475569; /* slate-600 */
+  --text-muted: #64748b;     /* slate-500 */
 
-  /* Google Colors */
-  --google-blue: #1a73e8;
-  --google-blue-hover: #155724;
-  --google-blue-surface: #e8f0fe;
-  --google-red: #ea4335;
-  --google-yellow: #fbbc04;
-  --google-green: #34a853;
+  /* Ecosystem Primary & Accents */
+  --google-blue: #2563eb;
+  --google-blue-hover: #1d4ed8;
+  --google-blue-surface: #eff6ff;
+  --google-red: #ef4444;
+  --google-yellow: #f59e0b;
+  --google-green: #10b981;
 
-  /* Accents */
-  --accent-primary: #1a73e8;
-  --accent-surface: #e8f0fe;
-  --accent-border: #c2e7ff;
+  --accent-primary: #2563eb;
+  --accent-surface: #eff6ff;
+  --accent-border: #bfdbfe;
 
-  /* Cartes Google Keep (Pastel Claires) */
+  /* Cartes Keep / Post-it (Subtle Slate-tinted pastels) */
   --card-bg-default: #ffffff;
-  --card-bg-indigo: #edf2fc;
-  --card-border-indigo: #c2e7ff;
-  --card-bg-emerald: #e6f4ea;
-  --card-border-emerald: #ceead6;
-  --card-bg-amber: #fef7e0;
-  --card-border-amber: #feefc3;
-  --card-bg-rose: #fce8e6;
-  --card-border-rose: #fad2cf;
-  --card-bg-cyan: #e4f7fb;
-  --card-border-cyan: #cbf0f8;
-  --card-bg-violet: #f3e8fd;
-  --card-border-violet: #e8d0fb;
+  --card-bg-indigo: #eff6ff;
+  --card-border-indigo: #bfdbfe;
+  --card-bg-emerald: #ecfdf5;
+  --card-border-emerald: #a7f3d0;
+  --card-bg-amber: #fffbeb;
+  --card-border-amber: #fde68a;
+  --card-bg-rose: #fff1f2;
+  --card-border-rose: #fecdd3;
+  --card-bg-cyan: #ecfeff;
+  --card-border-cyan: #a5f3fc;
+  --card-bg-violet: #f5f3ff;
+  --card-border-violet: #ddd6fe;
 
-  --shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-  --shadow-md: 0 2px 6px 2px rgba(60, 64, 67, 0.15);
-  --shadow-lg: 0 4px 14px rgba(60, 64, 67, 0.25);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.08);
 
-  --font-sans: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', Consolas, monospace;
 }
 
+html.dark,
 html[data-theme="dark"] {
   --color-scheme: dark;
 
-  /* Google Dark Theme Palette */
-  --bg-base: #202124;
-  --bg-surface: #2d2e30;
-  --bg-elevated: #35363a;
-  --bg-hover: #3c4043;
-  --border-subtle: #5f6368;
-  --border-focus: #8ab4f8;
+  /* oussamma.tn & Collify Dark Palette */
+  --bg-base: #0b1120;        /* deep slate/night */
+  --bg-surface: #111827;     /* gray-900 / dark card */
+  --bg-elevated: #1e293b;    /* slate-800 */
+  --bg-hover: #334155;       /* slate-700 */
+  --border-subtle: #1e293b;  /* slate-800 */
+  --border-focus: #3b82f6;   /* blue-500 */
 
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
-  --text-muted: #80868b;
+  --text-primary: #f8fafc;   /* slate-50 */
+  --text-secondary: #cbd5e1; /* slate-300 */
+  --text-muted: #94a3b8;     /* slate-400 */
 
-  /* Google Colors Dark */
-  --google-blue: #8ab4f8;
-  --google-blue-surface: rgba(138, 180, 248, 0.15);
-  --google-red: #f28b82;
-  --google-yellow: #fdd663;
-  --google-green: #81c995;
+  /* Ecosystem Primary & Accents Dark */
+  --google-blue: #3b82f6;
+  --google-blue-hover: #60a5fa;
+  --google-blue-surface: rgba(59, 130, 246, 0.15);
+  --google-red: #f87171;
+  --google-yellow: #fbbf24;
+  --google-green: #34d399;
 
-  --accent-primary: #8ab4f8;
-  --accent-surface: rgba(138, 180, 248, 0.15);
-  --accent-border: rgba(138, 180, 248, 0.35);
+  --accent-primary: #3b82f6;
+  --accent-surface: rgba(59, 130, 246, 0.15);
+  --accent-border: rgba(59, 130, 246, 0.35);
 
-  /* Cartes Google Keep (Sombre) */
-  --card-bg-default: #2d2e30;
-  --card-bg-indigo: #1c355e;
-  --card-border-indigo: #29477d;
-  --card-bg-emerald: #1e3a24;
-  --card-border-emerald: #285432;
-  --card-bg-amber: #423611;
-  --card-border-amber: #634f19;
-  --card-bg-rose: #4a1e2b;
-  --card-border-rose: #6e2c40;
-  --card-bg-cyan: #0f3b43;
-  --card-border-cyan: #195b66;
-  --card-bg-violet: #3c204d;
-  --card-border-violet: #572d70;
+  /* Cartes Keep (Dark Elevated Palette) */
+  --card-bg-default: #111827;
+  --card-bg-indigo: #0f274a;
+  --card-border-indigo: #1e40af;
+  --card-bg-emerald: #064e3b;
+  --card-border-emerald: #047857;
+  --card-bg-amber: #451a03;
+  --card-border-amber: #b45309;
+  --card-bg-rose: #4c0519;
+  --card-border-rose: #be123c;
+  --card-bg-cyan: #083344;
+  --card-border-cyan: #0e7490;
+  --card-bg-violet: #2e1065;
+  --card-border-violet: #6d28d9;
 
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.55);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.65);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.7);
 }
 
 * {

@@ -22,7 +22,13 @@ const state = {
 function applyTheme(themeName) {
   state.theme = themeName === 'dark' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', state.theme);
+  if (state.theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
   localStorage.setItem('notevault_theme', state.theme);
+  localStorage.setItem('collify_theme', state.theme);
   const icon = document.getElementById('theme-toggle-icon');
   if (icon) {
     icon.textContent = state.theme === 'dark' ? '☀️' : '🌙';

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>NoteVault AI — Notes Markdown, Keep & Kanban | oussamma.tn</title>
+  <title>Notes — Style Keep & Collaboration en direct | oussamma.tn</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -22,78 +22,26 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="/styles.css?v=2.0.0" />
+  <link rel="stylesheet" href="/styles.css?v=3.0.0" />
 </head>
 <body>
   <!-- ===================================================================== -->
-  <!-- 1. VUE DE PARTAGE PUBLIC EN LECTURE SEULE (?share=TOKEN)              -->
-  <!-- ===================================================================== -->
-  <div id="public-share-view" class="public-share-overlay hidden">
-    <div class="public-share-card">
-      <div class="public-share-header">
-        <div class="brand-badge">
-          <span class="brand-logo">🧠</span>
-          <span>NoteVault AI · <strong>notes.oussamma.tn</strong></span>
-        </div>
-        <div class="public-share-actions">
-          <button id="btn-copy-shared" class="btn btn-secondary btn-sm">📋 Copier le Markdown</button>
-          <a href="/" class="btn btn-primary btn-sm">Ouvrir mon espace Notes →</a>
-        </div>
-      </div>
-      <div id="public-share-body" class="public-share-body">
-        <!-- Injecté dynamiquement -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- 2. ÉCRAN D'AUTHENTIFICATION SSO OBLIGATOIRE                           -->
+  <!-- 1. ÉCRAN D'AUTHENTIFICATION SSO                                       -->
   <!-- ===================================================================== -->
   <div id="auth-wall" class="auth-wall hidden">
     <div class="auth-card">
       <div class="auth-glow"></div>
-      <div class="auth-icon">🧠</div>
-      <div class="auth-badge">ÉCOSYSTÈME SOUVERAIN OUSSAMMA.TN</div>
-      <h1>NoteVault AI & Second Brain</h1>
+      <div class="auth-icon">💡</div>
+      <div class="auth-badge">ÉCOSYSTÈME OUSSAMMA.TN</div>
+      <h1>Notes & Collaboration</h1>
       <p class="auth-subtitle">
-        Votre espace unifié de prise de notes hybride : <strong>Éditeur Markdown & WikiLinks</strong>, <strong>Cartes Rapides (Keep)</strong>, <strong>Tableaux Kanban</strong> et <strong>Assistant Cortex IA</strong> connecté à <code>ai.oussamma.tn</code>.
+        Vos notes simples, rapides et claires inspirées de Google Keep. Modifiez vos notes à plusieurs en temps réel via un lien sécurisé.
       </p>
-
-      <div class="auth-features-grid">
-        <div class="auth-feat">
-          <span>📝</span>
-          <div>
-            <strong>Markdown & Liens [[Wiki]]</strong>
-            <small>Éditeur structuré avec aperçu temps réel et backlinks</small>
-          </div>
-        </div>
-        <div class="auth-feat">
-          <span>🗂️</span>
-          <div>
-            <strong>Cartes Keep & Kanban</strong>
-            <small>Post-its colorés, checklists rapides et suivi de projets</small>
-          </div>
-        </div>
-        <div class="auth-feat">
-          <span>✨</span>
-          <div>
-            <strong>Assistant IA & Dictée Vocale</strong>
-            <small>Résumé, correction, auto-tags et transcription structurée</small>
-          </div>
-        </div>
-        <div class="auth-feat">
-          <span>💬</span>
-          <div>
-            <strong>Chat avec vos Notes</strong>
-            <small>Interrogez Cortex IA sur toute votre base de connaissances</small>
-          </div>
-        </div>
-      </div>
 
       <div id="auth-error-box" class="auth-error hidden"></div>
 
       <a href="/auth/login" class="btn btn-primary btn-lg btn-block">
-        🔐 Se connecter avec SSO AuthCore (sso-a.oussamma.tn)
+        🔐 Se connecter avec SSO AuthCore
       </a>
       <div class="auth-footer">
         <a href="https://oussamma.tn" target="_blank" rel="noopener">← Retour au Portail oussamma.tn</a>
@@ -102,60 +50,33 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- 3. APPLICATION PRINCIPALE NOTEVAULT AI                                -->
+  <!-- 2. APPLICATION PRINCIPALE : STYLE GOOGLE KEEP SIMPLE & CLAIR         -->
   <!-- ===================================================================== -->
   <div id="app-shell" class="app-shell hidden">
-    <!-- BARRE SUPÉRIEURE -->
+    <!-- BARRE SUPÉRIEURE ÉPURÉE -->
     <header class="topbar">
       <div class="topbar-left">
-        <button id="btn-toggle-sidebar" class="icon-btn" title="Afficher/Masquer les dossiers">☰</button>
+        <button id="btn-toggle-sidebar" class="icon-btn" title="Menu / Filtres">☰</button>
         <a href="https://oussamma.tn" class="ecosystem-pill" title="Portail oussamma.tn">🌐 oussamma.tn</a>
         <div class="app-brand">
-          <span class="app-brand-icon">🧠</span>
+          <span class="app-brand-icon">💡</span>
           <div>
-            <span class="app-brand-title">NoteVault AI</span>
-            <span class="app-brand-sub">Second Brain & Kanban</span>
+            <span class="app-brand-title">Notes</span>
           </div>
         </div>
       </div>
 
-      <!-- RECHERCHE TEXTUELLE + RECHERCHE SÉMANTIQUE IA -->
+      <!-- RECHERCHE SIMPLE & INSTANTANÉE -->
       <div class="topbar-center">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
-          <input type="text" id="global-search-input" placeholder="Rechercher une note, un #tag, ou poser une question à l'IA..." />
-          <button id="btn-ai-semantic-search" class="btn-ai-pill" title="Recherche sémantique intelligente via ai.oussamma.tn">
-            ✨ Recherche IA
-          </button>
+          <input type="text" id="global-search-input" placeholder="Rechercher dans vos notes..." />
+          <button id="btn-clear-search" class="icon-btn-sm hidden" title="Effacer la recherche">✕</button>
         </div>
       </div>
 
-      <!-- COMMUTATEUR DE VUES HYBRIDES & ACTIONS GLOBALES -->
+      <!-- ACTIONS COMPACTES : THÈME ET PROFIL -->
       <div class="topbar-right">
-        <div class="view-switcher" role="tablist">
-          <button class="view-tab active" data-view="editor" title="Éditeur Markdown & Second Brain (Style Notion/Obsidian)">
-            📄 <span>Markdown</span>
-          </button>
-          <button class="view-tab" data-view="cards" title="Cartes visuelles & Checklists rapides (Style Google Keep)">
-            🗂️ <span>Cartes Keep</span>
-          </button>
-          <button class="view-tab" data-view="kanban" title="Tableau Kanban de suivi de tâches">
-            📋 <span>Kanban</span>
-          </button>
-        </div>
-
-        <button id="btn-open-voice-modal" class="btn btn-voice btn-sm" title="Dictée vocale & Structuration IA">
-          🎙️ <span>Dictée IA</span>
-        </button>
-
-        <button id="btn-open-ai-gen-modal" class="btn btn-ai btn-sm" title="Générer une nouvelle note avec l'IA">
-          ✨ <span>Créer par IA</span>
-        </button>
-
-        <button id="btn-toggle-chat" class="btn btn-secondary btn-sm" title="Ouvrir Cortex IA (Chat avec mes notes)">
-          💬 <span>Cortex IA</span>
-        </button>
-
         <button id="btn-theme-toggle" class="icon-btn theme-toggle-btn" title="Basculer Mode Clair (Blanc) / Sombre (Noir)">
           <span id="theme-toggle-icon">🌙</span>
         </button>
@@ -168,484 +89,162 @@
       </div>
     </header>
 
-    <!-- BANNIÈRE RÉSULTATS RECHERCHE IA -->
-    <div id="ai-search-banner" class="ai-search-banner hidden">
-      <div class="ai-search-banner-content">
-        <div class="ai-search-header">
-          <strong>🧠 Réponse Synthétique Cortex IA :</strong>
-          <button id="btn-close-ai-search" class="icon-btn-sm">✕</button>
-        </div>
-        <p id="ai-search-direct-answer"></p>
-        <div id="ai-search-matches" class="ai-search-matches"></div>
-      </div>
-    </div>
-
     <!-- OVERLAY BACKDROP POUR MOBILE -->
     <div id="sidebar-backdrop" class="sidebar-backdrop hidden"></div>
 
     <!-- CORPS DE L'APPLICATION -->
     <div class="workspace-body">
-      <!-- BARRE LATÉRALE GAUCHE : NAVIGATION, DOSSIERS & TAGS -->
+      <!-- BARRE LATÉRALE GOOGLE KEEP -->
       <aside id="left-sidebar" class="left-sidebar">
-        <div class="sidebar-cta">
-          <button id="btn-new-note" class="btn btn-primary btn-block">
-            ＋ Nouvelle Note
-          </button>
-        </div>
-
-        <div class="sidebar-section">
-          <div class="sidebar-label">VUES & FILTRES</div>
-          <ul class="nav-list" id="QuickFiltersList">
-            <li class="nav-item active" data-filter="all">
-              <span>📚 Toutes les notes</span>
-              <span class="nav-count" id="count-all">0</span>
-            </li>
-            <li class="nav-item" data-filter="pinned">
-              <span>📌 Épinglées / Favoris</span>
-              <span class="nav-count" id="count-pinned">0</span>
-            </li>
-            <li class="nav-item" data-filter="archived">
-              <span>🗄️ Archives</span>
-              <span class="nav-count" id="count-archived">0</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="sidebar-section">
-          <div class="sidebar-label-row">
-            <span class="sidebar-label">DOSSIERS / ESPACES</span>
-            <button id="btn-add-folder" class="icon-btn-sm" title="Nouveau dossier">＋</button>
-          </div>
-          <ul class="nav-list" id="folders-list">
-            <!-- Injecté dynamiquement -->
-          </ul>
-        </div>
-
-        <div class="sidebar-section">
-          <div class="sidebar-label">TAGS POPULAIRES</div>
-          <div class="tags-cloud" id="sidebar-tags-cloud">
-            <!-- Injecté dynamiquement -->
-          </div>
-        </div>
-
-        <div class="sidebar-footer">
-          <div class="ai-status-indicator">
-            <span class="dot-online"></span>
-            <span>Passerelle <strong>ai.oussamma.tn</strong> active</span>
-          </div>
-        </div>
+        <ul class="nav-list" id="QuickFiltersList">
+          <li class="nav-item active" data-filter="all">
+            <span>💡 Notes</span>
+            <span class="nav-count" id="count-all">0</span>
+          </li>
+          <li class="nav-item" data-filter="shared">
+            <span>👥 Partagées avec moi</span>
+            <span class="nav-count" id="count-shared">0</span>
+          </li>
+          <li class="nav-item" data-filter="pinned">
+            <span>📌 Épinglées</span>
+            <span class="nav-count" id="count-pinned">0</span>
+          </li>
+          <li class="nav-item" data-filter="archived">
+            <span>🗄️ Archives</span>
+            <span class="nav-count" id="count-archived">0</span>
+          </li>
+        </ul>
       </aside>
 
-      <!-- ZONE CENTRALE MULTI-VUES -->
+      <!-- ZONE CENTRALE : INTERFACE GOOGLE KEEP -->
       <main class="main-stage">
-
-        <!-- =============================================================== -->
-        <!-- VUE 1 : ÉDITEUR MARKDOWN & SECOND BRAIN (STYLE NOTION/OBSIDIAN) -->
-        <!-- =============================================================== -->
-        <section id="view-editor" class="stage-view active">
-          <!-- Colonne Liste des notes -->
-          <div class="notes-list-pane">
-            <div class="pane-header">
-              <h2 id="current-list-title">Toutes les notes</h2>
-              <span id="notes-list-counter" class="badge-count">0</span>
-            </div>
-            <div id="editor-notes-list" class="notes-list-scroll">
-              <!-- Liste des notes -->
-            </div>
-          </div>
-
-          <!-- Colonne Éditeur de la note sélectionnée -->
-          <div class="note-detail-pane" id="note-detail-pane">
-            <div id="empty-note-state" class="empty-state hidden">
-              <div class="empty-icon">📝</div>
-              <h3>Sélectionnez ou créez une note</h3>
-              <p>Utilisez l'éditeur Markdown, la dictée vocale ou le générateur IA pour enrichir votre Second Brain.</p>
-              <button id="btn-empty-new-note" class="btn btn-primary">＋ Créer une note</button>
+        <div class="keep-container">
+          <!-- BARRE DE SAISIE RAPIDE STYLE KEEP -->
+          <div class="keep-quick-capture" id="keep-quick-box">
+            <div class="keep-capture-header">
+              <input type="text" id="keep-quick-title" placeholder="Titre de la note..." />
+              <div class="keep-color-options">
+                <button type="button" class="color-dot active" data-color="default" title="Blanc / Par défaut"></button>
+                <button type="button" class="color-dot" data-color="indigo" title="Bleu"></button>
+                <button type="button" class="color-dot" data-color="emerald" title="Vert"></button>
+                <button type="button" class="color-dot" data-color="amber" title="Jaune"></button>
+                <button type="button" class="color-dot" data-color="rose" title="Rouge"></button>
+                <button type="button" class="color-dot" data-color="cyan" title="Cyan"></button>
+                <button type="button" class="color-dot" data-color="violet" title="Violet"></button>
+              </div>
             </div>
 
-            <div id="active-note-container" class="active-note-container">
-              <!-- En-tête métadonnées de la note -->
-              <div class="note-meta-bar">
-                <div class="note-title-row">
-                  <button id="btn-mobile-back" class="icon-btn mobile-back-btn" title="Retour à la liste des notes">←</button>
-                  <input type="text" id="note-emoji-input" class="emoji-input" maxlength="4" value="📝" title="Changer l'icône" />
-                  <input type="text" id="note-title-input" class="title-input" placeholder="Titre de la note..." />
-                </div>
+            <textarea id="keep-quick-content" rows="2" placeholder="Créer une note..."></textarea>
 
-                <div class="note-actions-top">
-                  <span id="save-status-indicator" class="save-indicator">✓ Enregistré</span>
-                  <button id="btn-pin-note" class="icon-btn" title="Épingler aux favoris">📌</button>
-                  <button id="btn-share-note" class="btn btn-secondary btn-xs" title="Partager par lien public ou exporter">
-                    🔗 Partager & Exporter
-                  </button>
-                  <button id="btn-archive-note" class="icon-btn" title="Archiver / Désarchiver">🗄️</button>
-                  <button id="btn-delete-note" class="icon-btn danger" title="Supprimer cette note">🗑️</button>
-                </div>
-              </div>
-
-              <!-- Sélecteurs rapides : Dossier, Statut Kanban, Priorité, Couleur, Échéance -->
-              <div class="note-properties-bar">
-                <label class="prop-item">
-                  <span>📁 Dossier</span>
-                  <select id="note-folder-select"></select>
-                </label>
-
-                <label class="prop-item">
-                  <span>📋 Statut</span>
-                  <select id="note-kanban-select">
-                    <option value="todo">💡 À faire</option>
-                    <option value="in_progress">⚡ En cours</option>
-                    <option value="review">🔍 En révision</option>
-                    <option value="done">✅ Terminé</option>
-                  </select>
-                </label>
-
-                <label class="prop-item">
-                  <span>🎯 Priorité</span>
-                  <select id="note-priority-select">
-                    <option value="low">🟢 Basse</option>
-                    <option value="medium">🔵 Moyenne</option>
-                    <option value="high">🟠 Haute</option>
-                    <option value="urgent">🔴 Urgente</option>
-                  </select>
-                </label>
-
-                <label class="prop-item">
-                  <span>🎨 Couleur</span>
-                  <select id="note-color-select">
-                    <option value="indigo">Indigo</option>
-                    <option value="emerald">Émeraude</option>
-                    <option value="amber">Ambre</option>
-                    <option value="rose">Rose</option>
-                    <option value="cyan">Cyan</option>
-                    <option value="violet">Violet</option>
-                  </select>
-                </label>
-
-                <label class="prop-item">
-                  <span>📅 Échéance</span>
-                  <input type="date" id="note-duedate-input" />
-                </label>
-              </div>
-
-              <!-- Barre de Tags -->
-              <div class="note-tags-bar">
-                <div id="note-tags-list" class="note-tags-list"></div>
-                <input type="text" id="note-add-tag-input" class="tag-input-inline" placeholder="+ Ajouter un tag (Entrée)..." />
-              </div>
-
-              <!-- BARRE D'OUTILS MARKDOWN & ACTIONS IA -->
-              <div class="editor-toolbar">
-                <div class="md-tools">
-                  <button class="tool-btn" data-md="h1" title="Titre H1">H1</button>
-                  <button class="tool-btn" data-md="h2" title="Titre H2">H2</button>
-                  <button class="tool-btn" data-md="h3" title="Titre H3">H3</button>
-                  <span class="tool-sep"></span>
-                  <button class="tool-btn" data-md="bold" title="Gras"><strong>B</strong></button>
-                  <button class="tool-btn" data-md="italic" title="Italique"><em>I</em></button>
-                  <button class="tool-btn" data-md="code" title="Code inline">&lt;/&gt;</button>
-                  <button class="tool-btn" data-md="codeblock" title="Bloc de code">{ }</button>
-                  <span class="tool-sep"></span>
-                  <button class="tool-btn" data-md="list" title="Liste à puces">• Liste</button>
-                  <button class="tool-btn" data-md="check" title="Case à cocher">- [ ]</button>
-                  <button class="tool-btn" data-md="quote" title="Citation">❝</button>
-                  <button class="tool-btn" data-md="wikilink" title="Insérer un lien vers une autre note [[Titre]]">[[Lien]]</button>
-                </div>
-
-                <!-- Mode d'affichage éditeur : Split / Éditer / Lecture -->
-                <div class="editor-mode-tabs">
-                  <button class="mode-btn active" data-mode="split">Split</button>
-                  <button class="mode-btn" data-mode="write">Édition</button>
-                  <button class="mode-btn" data-mode="preview">Aperçu</button>
-                </div>
-              </div>
-
-              <!-- BARRE D'ASSISTANCE IA D'ÉCRITURE -->
-              <div class="ai-writing-bar">
-                <span class="ai-bar-label">✨ IA :</span>
-                <button class="ai-action-chip" id="btn-ai-autoorganize" title="Générer automatiquement tags, titre, dossier et checklist d'actions">
-                  🧠 Auto-Tags & Tâches
-                </button>
-                <button class="ai-action-chip" data-ai-action="improve" title="Corriger l'orthographe et améliorer le style">
-                  🪄 Corriger & Améliorer
-                </button>
-                <button class="ai-action-chip" data-ai-action="summarize" title="Générer un résumé exécutif">
-                  📝 Résumer
-                </button>
-                <button class="ai-action-chip" data-ai-action="action_plan" title="Transformer en plan d'action structuré">
-                  🎯 Plan d'Action
-                </button>
-                <button class="ai-action-chip" data-ai-action="continue" title="Continuer la rédaction avec l'IA">
-                  🚀 Continuer
-                </button>
-                <button class="ai-action-chip" data-ai-action="simplify" title="Simplifier et clarifier">
-                  💡 Simplifier
-                </button>
-                <div class="ai-translate-group">
-                  <select id="ai-translate-lang" class="ai-lang-select">
-                    <option value="">🌍 Traduire...</option>
-                    <option value="Anglais">🇬🇧 Anglais</option>
-                    <option value="Français">🇫🇷 Français</option>
-                    <option value="Arabe">🇹🇳 Arabe</option>
-                    <option value="Espagnol">🇪🇸 Espagnol</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- ZONE D'ÉDITION & APERÇU SPLIT -->
-              <div id="editor-split-area" class="editor-split-area mode-split">
-                <div class="editor-pane-write">
-                  <textarea id="note-content-textarea" placeholder="Écrivez en Markdown... Utilisez [[Titre d'une note]] pour relier vos idées, ou sollicitez l'assistant IA ci-dessus !"></textarea>
-                </div>
-                <div class="editor-pane-preview">
-                  <div id="note-markdown-preview" class="markdown-body"></div>
-                </div>
-              </div>
-
-              <!-- PANNEAU INFÉRIEUR : CHECKLIST INTERACTIVE + LIENS WIKI (BACKLINKS) -->
-              <div class="note-bottom-panels">
-                <!-- Checklist structurée -->
-                <div class="checklist-panel">
-                  <div class="panel-sub-header">
-                    <h4>✅ Checklist & Sous-tâches <span id="checklist-progress-badge" class="badge-mini">0/0</span></h4>
-                  </div>
-                  <div id="note-checklist-items" class="checklist-items"></div>
-                  <div class="checklist-add-row">
-                    <input type="text" id="new-checklist-item-input" placeholder="+ Ajouter une tâche à cocher (Entrée)..." />
-                    <button id="btn-add-checklist-item" class="btn btn-secondary btn-xs">Ajouter</button>
-                  </div>
-                </div>
-
-                <!-- Liens Bidirectionnels (Second Brain Graph Links) -->
-                <div class="backlinks-panel">
-                  <div class="panel-sub-header">
-                    <h4>🔗 Connexions Second Brain (WikiLinks)</h4>
-                    <span id="note-stats-info" class="stats-meta">0 mots · 1 min</span>
-                  </div>
-                  <div id="note-links-container" class="note-links-container">
-                    <!-- Liens sortants & entrants -->
-                  </div>
-                </div>
-              </div>
+            <div class="keep-capture-footer">
+              <span class="keep-hint">💡 Astuce : tapez <code>- [ ]</code> pour créer des cases à cocher</span>
+              <button id="btn-keep-create" class="btn btn-primary btn-sm">Enregistrer</button>
             </div>
           </div>
-        </section>
 
-        <!-- =============================================================== -->
-        <!-- VUE 2 : CARTES VISUELLES & CHECKLISTS RAPIDES (STYLE KEEP)      -->
-        <!-- =============================================================== -->
-        <section id="view-cards" class="stage-view">
-          <div class="keep-container">
-            <!-- Barre de création rapide style Google Keep -->
-            <div class="keep-quick-capture">
-              <div class="keep-capture-header">
-                <input type="text" id="keep-quick-title" placeholder="📌 Titre de la note rapide ou post-it..." />
-                <select id="keep-quick-color" class="keep-color-picker">
-                  <option value="indigo">🟣 Indigo</option>
-                  <option value="emerald">🟢 Émeraude</option>
-                  <option value="amber">🟡 Ambre</option>
-                  <option value="rose">🔴 Rose</option>
-                  <option value="cyan">🔵 Cyan</option>
-                  <option value="violet">🔮 Violet</option>
-                </select>
-              </div>
-              <textarea id="keep-quick-content" rows="2" placeholder="Prendre une note rapide... (Chaque ligne commençant par '- ' deviendra une tâche à cocher)"></textarea>
-              <div class="keep-capture-footer">
-                <span class="keep-hint">💡 Astuce : Vous pouvez cocher les tâches directement sur les cartes</span>
-                <div class="keep-capture-btns">
-                  <button id="btn-keep-voice" class="btn btn-secondary btn-xs">🎙️ Dictée IA</button>
-                  <button id="btn-keep-create" class="btn btn-primary btn-sm">＋ Ajouter la carte</button>
-                </div>
-              </div>
-            </div>
+          <!-- TITRE DE FILTRE ACTIF -->
+          <div id="keep-filter-title" class="keep-view-heading hidden"></div>
 
-            <!-- Grille de cartes épinglées et autres -->
+          <!-- SECTION ÉPINGLÉES -->
+          <div id="section-pinned" class="keep-section hidden">
+            <div class="section-label">📌 ÉPINGLÉES</div>
+            <div id="keep-pinned-grid" class="keep-cards-grid"></div>
+          </div>
+
+          <!-- SECTION PRINCIPALE -->
+          <div id="section-others" class="keep-section">
+            <div id="section-others-label" class="section-label hidden">AUTRES NOTES</div>
             <div id="keep-cards-grid" class="keep-cards-grid">
               <!-- Injecté dynamiquement -->
             </div>
           </div>
-        </section>
-
-        <!-- =============================================================== -->
-        <!-- VUE 3 : TABLEAUX KANBAN (GESTION DE PROJETS & TÂCHES)           -->
-        <!-- =============================================================== -->
-        <section id="view-kanban" class="stage-view">
-          <div class="kanban-board">
-            <!-- Colonne 1 : À faire -->
-            <div class="kanban-column" data-status="todo">
-              <div class="kanban-col-header status-todo">
-                <span>💡 À faire / Idées</span>
-                <span class="kanban-count" id="kb-count-todo">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kb-list-todo" data-status="todo"></div>
-              <button class="kanban-add-btn" data-add-status="todo">＋ Ajouter une carte</button>
-            </div>
-
-            <!-- Colonne 2 : En cours -->
-            <div class="kanban-column" data-status="in_progress">
-              <div class="kanban-col-header status-progress">
-                <span>⚡ En cours</span>
-                <span class="kanban-count" id="kb-count-in_progress">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kb-list-in_progress" data-status="in_progress"></div>
-              <button class="kanban-add-btn" data-add-status="in_progress">＋ Ajouter une carte</button>
-            </div>
-
-            <!-- Colonne 3 : En révision -->
-            <div class="kanban-column" data-status="review">
-              <div class="kanban-col-header status-review">
-                <span>🔍 En révision</span>
-                <span class="kanban-count" id="kb-count-review">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kb-list-review" data-status="review"></div>
-              <button class="kanban-add-btn" data-add-status="review">＋ Ajouter une carte</button>
-            </div>
-
-            <!-- Colonne 4 : Terminé -->
-            <div class="kanban-column" data-status="done">
-              <div class="kanban-col-header status-done">
-                <span>✅ Terminé</span>
-                <span class="kanban-count" id="kb-count-done">0</span>
-              </div>
-              <div class="kanban-cards-list" id="kb-list-done" data-status="done"></div>
-              <button class="kanban-add-btn" data-add-status="done">＋ Ajouter une carte</button>
-            </div>
-          </div>
-        </section>
-
+        </div>
       </main>
-
-      <!-- ================================================================= -->
-      <!-- VOLET LATÉRAL DROIT : CORTEX IA (CHAT AVEC MES NOTES)             -->
-      <!-- ================================================================= -->
-      <aside id="chat-drawer" class="chat-drawer hidden">
-        <div class="chat-drawer-header">
-          <div class="chat-agent-title">
-            <span class="chat-avatar">🧠</span>
-            <div>
-              <h3>Cortex IA</h3>
-              <small>Chattez avec toutes vos notes</small>
-            </div>
-          </div>
-          <div class="chat-header-btns">
-            <button id="btn-clear-chat" class="icon-btn-sm" title="Effacer la conversation">🗑️</button>
-            <button id="btn-close-chat" class="icon-btn-sm" title="Fermer">✕</button>
-          </div>
-        </div>
-
-        <div class="chat-quick-prompts">
-          <button class="chat-chip" data-prompt="Quelles sont mes tâches prioritaires et actions restantes ?">🎯 Tâches urgentes</button>
-          <button class="chat-chip" data-prompt="Fais-moi une synthèse globale de toutes mes notes actuelles.">📊 Synthèse globale</button>
-          <button class="chat-chip" data-prompt="Propose 3 nouvelles idées basées sur mes notes d'architecture et d'IA.">💡 Idées connexes</button>
-        </div>
-
-        <div id="chat-messages" class="chat-messages">
-          <!-- Messages -->
-        </div>
-
-        <form id="chat-form" class="chat-input-bar">
-          <input type="text" id="chat-input" placeholder="Posez une question sur vos notes..." autocomplete="off" />
-          <button type="submit" class="btn btn-primary btn-sm">Envoyer</button>
-        </form>
-      </aside>
     </div>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODALS : DICTÉE VOCALE IA, GÉNÉRATION IA, PARTAGE & EXPORT            -->
+  <!-- MODAL 1 : ÉDITION COMPLÈTE DE LA CARTE / NOTE (STYLE GOOGLE KEEP)    -->
   <!-- ===================================================================== -->
-
-  <!-- Modal 1 : Dictée Vocale & Structuration IA -->
-  <div id="modal-voice" class="modal-backdrop hidden">
-    <div class="modal-card">
+  <div id="modal-edit-note" class="modal-backdrop hidden">
+    <div class="modal-card modal-keep-edit" id="modal-keep-card">
       <div class="modal-header">
-        <h3>🎙️ Dictée Vocale & Structuration IA</h3>
-        <button class="icon-btn-sm" data-close-modal="modal-voice">✕</button>
-      </div>
-      <div class="modal-body">
-        <p class="modal-desc">
-          Dictez vos idées librement au microphone (ou collez un brouillon brut). <strong>Cortex IA</strong> nettoiera les hésitations et structurera automatiquement une note Markdown propre avec titre, tags et checklist !
-        </p>
-        <div class="voice-controls">
-          <select id="voice-lang-select" class="input-select">
-            <option value="fr-FR">🇫🇷 Français</option>
-            <option value="en-US">🇬🇧 English</option>
-            <option value="ar-TN">🇹🇳 العربية</option>
-          </select>
-          <button id="btn-start-recording" class="btn btn-voice">🎙️ Démarrer l'écoute</button>
-          <span id="voice-status-badge" class="voice-status">Prêt</span>
+        <input type="text" id="edit-note-title" class="edit-modal-title" placeholder="Titre..." />
+        <div class="modal-header-actions">
+          <button id="btn-edit-pin" class="icon-btn-sm" title="Épingler la note">📌</button>
+          <button id="btn-edit-collab" class="btn btn-primary btn-xs" title="Collaborer en temps réel">👥 Collaborer</button>
+          <button id="btn-edit-archive" class="icon-btn-sm" title="Archiver">🗄️</button>
+          <button id="btn-edit-delete" class="icon-btn-sm danger" title="Supprimer">🗑️</button>
+          <button class="icon-btn-sm" data-close-modal="modal-edit-note" title="Fermer">✕</button>
         </div>
-        <textarea id="voice-transcript-textarea" rows="6" placeholder="Votre dictée vocale apparaîtra ici en direct... Vous pouvez aussi saisir ou coller des notes en vrac."></textarea>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-close-modal="modal-voice">Annuler</button>
-        <button id="btn-structure-voice" class="btn btn-primary">✨ Structurer & Créer la Note par IA</button>
+
+      <div class="modal-body">
+        <div id="collab-live-badge" class="collab-live-badge hidden">
+          <span class="live-dot"></span>
+          <span id="collab-status-text">Synchronisation en direct</span>
+          <div id="collab-avatars" class="collab-avatars"></div>
+        </div>
+
+        <textarea id="edit-note-content" class="edit-modal-content" rows="8" placeholder="Contenu de la note..."></textarea>
+
+        <!-- Checklist interactive -->
+        <div id="edit-note-checklist-box" class="edit-checklist-box">
+          <div id="edit-checklist-items" class="checklist-items"></div>
+          <div class="checklist-add-row">
+            <input type="text" id="edit-new-chk-input" placeholder="+ Ajouter une tâche (Entrée)..." />
+            <button id="btn-add-chk-item" class="btn btn-secondary btn-xs">Ajouter</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer edit-modal-footer">
+        <div class="keep-color-options">
+          <button type="button" class="color-dot active" data-edit-color="default" title="Blanc / Par défaut"></button>
+          <button type="button" class="color-dot" data-edit-color="indigo" title="Bleu"></button>
+          <button type="button" class="color-dot" data-edit-color="emerald" title="Vert"></button>
+          <button type="button" class="color-dot" data-edit-color="amber" title="Jaune"></button>
+          <button type="button" class="color-dot" data-edit-color="rose" title="Rouge"></button>
+          <button type="button" class="color-dot" data-edit-color="cyan" title="Cyan"></button>
+          <button type="button" class="color-dot" data-edit-color="violet" title="Violet"></button>
+        </div>
+
+        <div class="edit-footer-right">
+          <span id="edit-save-indicator" class="save-indicator">✓ Enregistré</span>
+          <button class="btn btn-secondary btn-sm" data-close-modal="modal-edit-note">Fermer</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal 2 : Créer une Note Complète par IA -->
-  <div id="modal-ai-gen" class="modal-backdrop hidden">
+  <!-- ===================================================================== -->
+  <!-- MODAL 2 : LIEN DE COLLABORATION EN TEMPS RÉEL (PARTAGE PARTICIPANTS)  -->
+  <!-- ===================================================================== -->
+  <div id="modal-collab" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>✨ Générer une Note Structurée avec l'IA</h3>
-        <button class="icon-btn-sm" data-close-modal="modal-ai-gen">✕</button>
+        <h3>👥 Collaborer sur cette note en temps réel</h3>
+        <button class="icon-btn-sm" data-close-modal="modal-collab">✕</button>
       </div>
       <div class="modal-body">
         <p class="modal-desc">
-          Décrivez le sujet, le plan de projet, la fiche technique ou le modèle de réunion que vous souhaitez générer via <code>ai.oussamma.tn</code>.
+          Partagez ce lien avec d'autres personnes connectées. <strong>Toute personne disposant du lien peut modifier la note en même temps que vous</strong>, et elle apparaîtra directement dans leurs <strong>"👥 Partagées avec moi"</strong> !
         </p>
-        <textarea id="ai-gen-prompt-input" rows="4" placeholder="Ex: Checklist complète de sécurisation d'un serveur Linux Docker en production avec Traefik et sauvegardes..."></textarea>
-        <div class="ai-template-suggestions">
-          <span class="chip-suggest" data-gen="Architecture microservice FastAPI + PostgreSQL + Redis avec checklist de déploiement">🏗️ Architecture Microservice</span>
-          <span class="chip-suggest" data-gen="Modèle de compte-rendu de réunion hebdomadaire avec objectifs, blocages et plan d'action">📋 Compte-rendu Sprint</span>
-          <span class="chip-suggest" data-gen="Guide des bonnes pratiques OAuth2 / OIDC avec PKCE et sécurité des tokens">🔐 Fiche Sécurité OIDC</span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-close-modal="modal-ai-gen">Annuler</button>
-        <button id="btn-submit-ai-gen" class="btn btn-primary">🚀 Générer la Note</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Modal 3 : Partage Public & Export Multi-Formats -->
-  <div id="modal-share" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>🔗 Partager & Exporter la Note</h3>
-        <button class="icon-btn-sm" data-close-modal="modal-share">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="share-section">
-          <h4>🌐 Lien Public en Lecture Seule</h4>
-          <p class="modal-desc">Permet à toute personne disposant du lien de lire cette note sans avoir besoin de compte.</p>
-          <div class="share-toggle-row">
-            <label class="switch-label">
-              <input type="checkbox" id="share-public-checkbox" />
-              <span>Activer le lien de partage public</span>
-            </label>
-          </div>
-          <div id="share-url-box" class="share-url-box hidden">
-            <input type="text" id="share-url-input" readonly />
-            <button id="btn-copy-share-url" class="btn btn-primary btn-xs">Copier le lien</button>
-          </div>
+        <div class="share-url-box">
+          <input type="text" id="collab-share-url-input" readonly />
+          <button id="btn-copy-collab-url" class="btn btn-primary btn-sm">📋 Copier le lien</button>
         </div>
 
-        <hr class="modal-divider" />
-
-        <div class="export-section">
-          <h4>📥 Exporter la Note</h4>
-          <div class="export-buttons-grid">
-            <button id="btn-export-md" class="btn btn-secondary">📄 Télécharger .MD (Markdown)</button>
-            <button id="btn-export-html" class="btn btn-secondary">🌐 Télécharger .HTML</button>
-            <button id="btn-export-print" class="btn btn-secondary">🖨️ Imprimer / PDF</button>
-            <button id="btn-export-copy" class="btn btn-secondary">📋 Copier le texte</button>
+        <div class="collab-participants-section">
+          <h4>Collaborateurs sur cette note (<span id="collab-participants-count">0</span>)</h4>
+          <div id="collab-participants-list" class="collab-participants-list">
+            <!-- Liste des collaborateurs -->
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" data-close-modal="modal-share">Fermer</button>
+        <button class="btn btn-secondary" data-close-modal="modal-collab">Fermer</button>
       </div>
     </div>
   </div>

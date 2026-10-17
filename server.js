@@ -326,17 +326,99 @@ app.delete('/api/notes/:id', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
-// Basculer le partage public d'une note
-app.post('/api/notes/:id/share', requireAuth, (req, res) => {
+// Basculer / Activer le lien de collaboration multi-personnes en temps réel
+app.post('/api/notes/:id/collaborate', requireAuth, (req, res) => {
   try {
     const userId = getUserId(req);
-    const { enable } = req.body;
-    const note = Storage.toggleShareNote(userId, req.params.id, Boolean(enable));
-    const shareUrl = note.isPublic && note.shareToken ? `${APP_URL}/?share=${note.shareToken}` : null;
-    res.json({ note, shareUrl });
+    const result = Storage.enableCollaboration(userId, req.params.id);
+    const collabUrl = `${APP_URL}/?collab=${result.collabToken}`;
+    res.json({ ...result, collabUrl });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Rejoindre une note partagée via lien de collaboration
+app.get('/api/collab/:token', requireAuth, (req, res) => {
+  const token = req.params.token;
+  const user = req.session?.user;
+  const result = Storage.joinCollaboration(token, user);
+  if (!result) {
+    return res.status(404).json({ error: 'Lien de collaboration invalide ou note introuvable' });
+  }
+  // Notifier tous les participants connectés via SSE
+  notifyCollabClients(token, 'participant_joined', {
+    user: { name: user.name || user.email, email: user.email },
+    collaborators: result.note.collaborators
+  });
+  res.json(result);
+});
+
+// Mise à jour en direct du contenu d'une note collaborative (titre, contenu, checklist, couleur)
+app.put('/api/collab/:token', requireAuth, (req, res) => {
+  try {
+    const token = req.params.token;
+    const user = req.session?.user;
+    const result = Storage.updateCollabNoteContent(token, req.body, user);
+    if (!result) {
+      return res.status(404).json({ error: 'Note introuvable' });
+    }
+    // Diffuser la modification en temps réel à tous les collaborateurs connectés
+    notifyCollabClients(token, 'note_updated', {
+      note: result.note,
+      updatedBy: user ? (user.name || user.email) : 'Collaborateur'
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// SSE (Server-Sent Events) pour la synchronisation en temps réel de la note
+const collabSseClients = new Map(); // token => Set of res
+
+function notifyCollabClients(token, eventType, data) {
+  const clients = collabSseClients.get(token);
+  if (clients) {
+    const payload = `event: ${eventType}\ndata: ${JSON.stringify(data)}\n\n`;
+    for (const client of clients) {
+      try {
+        client.write(payload);
+      } catch (e) {
+        clients.delete(client);
+      }
+    }
+  }
+}
+
+app.get('/api/collab/:token/live', requireAuth, (req, res) => {
+  const token = req.params.token;
+  const user = req.session?.user;
+  const result = Storage.getNoteByCollabToken(token);
+  if (!result) {
+    return res.status(404).end('Note not found');
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  if (!collabSseClients.has(token)) {
+    collabSseClients.set(token, new Set());
+  }
+  collabSseClients.get(token).add(res);
+
+  // Message initial de bienvenue / statut
+  res.write(`event: init\ndata: ${JSON.stringify({ note: result.note, user: user ? { name: user.name || user.email } : null })}\n\n`);
+
+  req.on('close', () => {
+    const clients = collabSseClients.get(token);
+    if (clients) {
+      clients.delete(res);
+      if (clients.size === 0) collabSseClients.delete(token);
+    }
+  });
 });
 
 // Déplacer une note dans le Kanban ou changer sa priorité

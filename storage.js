@@ -139,7 +139,30 @@ export const Storage = {
   getNotes(userId) {
     const db = readDB();
     const space = ensureUserSpace(db, userId);
-    return space.notes.sort((a, b) => {
+
+    // Notes créées par l'utilisateur
+    const myNotes = (space.notes || []).map(n => ({ ...n, isSharedWithMe: false }));
+
+    // Notes partagées avec cet utilisateur (dont il est collaborateur via lien de collaboration)
+    const sharedWithMe = [];
+    for (const [ownerId, ownerSpace] of Object.entries(db.users || {})) {
+      if (ownerId === userId) continue;
+      for (const note of (ownerSpace.notes || [])) {
+        if (note.collabToken && Array.isArray(note.collaborators)) {
+          const isParticipant = note.collaborators.some(c => c.id === userId || c.email === userId);
+          if (isParticipant) {
+            sharedWithMe.push({
+              ...note,
+              ownerId,
+              isSharedWithMe: true
+            });
+          }
+        }
+      }
+    }
+
+    const all = [...myNotes, ...sharedWithMe];
+    return all.sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
     });
@@ -148,112 +171,201 @@ export const Storage = {
   getNoteById(userId, noteId) {
     const db = readDB();
     const space = ensureUserSpace(db, userId);
-    return space.notes.find(n => n.id === noteId) || null;
+    const found = space.notes.find(n => n.id === noteId);
+    if (found) return { ...found, isSharedWithMe: false };
+
+    // Vérifier si c'est une note partagée dont l'utilisateur est collaborateur
+    for (const [ownerId, ownerSpace] of Object.entries(db.users || {})) {
+      if (ownerId === userId) continue;
+      const sharedNote = (ownerSpace.notes || []).find(n => n.id === noteId);
+      if (sharedNote && sharedNote.collabToken) {
+        return { ...sharedNote, ownerId, isSharedWithMe: true };
+      }
+    }
+    return null;
   },
 
-  saveNote(userId, noteData) {
+  saveNote(userId, noteData, editorUser = null) {
     const db = readDB();
     const space = ensureUserSpace(db, userId);
     const now = new Date().toISOString();
 
+    // 1. Vérifier si c'est une note possédée par l'utilisateur
     const existingIdx = noteData.id ? space.notes.findIndex(n => n.id === noteData.id) : -1;
-
     if (existingIdx >= 0) {
       const current = space.notes[existingIdx];
       const updated = {
         ...current,
         title: noteData.title !== undefined ? (noteData.title.trim() || 'Note sans titre') : current.title,
-        emoji: noteData.emoji !== undefined ? noteData.emoji : (current.emoji || '📝'),
-        folderId: noteData.folderId !== undefined ? noteData.folderId : current.folderId,
-        type: noteData.type !== undefined ? noteData.type : (current.type || 'markdown'),
-        color: noteData.color !== undefined ? noteData.color : (current.color || 'indigo'),
+        color: noteData.color !== undefined ? noteData.color : (current.color || 'default'),
         pinned: noteData.pinned !== undefined ? Boolean(noteData.pinned) : Boolean(current.pinned),
         archived: noteData.archived !== undefined ? Boolean(noteData.archived) : Boolean(current.archived),
-        kanbanStatus: noteData.kanbanStatus !== undefined ? noteData.kanbanStatus : (current.kanbanStatus || 'todo'),
-        priority: noteData.priority !== undefined ? noteData.priority : (current.priority || 'medium'),
-        dueDate: noteData.dueDate !== undefined ? noteData.dueDate : (current.dueDate || null),
-        tags: Array.isArray(noteData.tags) ? noteData.tags : (current.tags || []),
         content: noteData.content !== undefined ? noteData.content : (current.content || ''),
         checklist: Array.isArray(noteData.checklist) ? noteData.checklist : (current.checklist || []),
+        lastEditedBy: editorUser ? (editorUser.name || editorUser.email) : (current.lastEditedBy || null),
+        version: (current.version || 1) + 1,
         updatedAt: now
       };
       space.notes[existingIdx] = updated;
       writeDB(db);
       return updated;
-    } else {
-      const newNote = {
-        id: noteData.id || `note_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`,
-        title: (noteData.title || 'Nouvelle note').trim(),
-        emoji: noteData.emoji || '📝',
-        folderId: noteData.folderId || space.folders[0]?.id || 'folder_personal',
-        type: noteData.type || 'markdown',
-        color: noteData.color || 'indigo',
-        pinned: Boolean(noteData.pinned),
-        archived: Boolean(noteData.archived),
-        kanbanStatus: noteData.kanbanStatus || 'todo',
-        priority: noteData.priority || 'medium',
-        dueDate: noteData.dueDate || null,
-        tags: Array.isArray(noteData.tags) ? noteData.tags : [],
-        content: noteData.content || '',
-        checklist: Array.isArray(noteData.checklist) ? noteData.checklist : [],
-        shareToken: null,
-        isPublic: false,
-        createdAt: now,
-        updatedAt: now
-      };
-      space.notes.unshift(newNote);
-      writeDB(db);
-      return newNote;
     }
+
+    // 2. Si non trouvée dans l'espace utilisateur, vérifier si c'est une note partagée appartenant à un autre utilisateur
+    if (noteData.id) {
+      for (const [ownerId, ownerSpace] of Object.entries(db.users || {})) {
+        if (ownerId === userId) continue;
+        const sharedIdx = (ownerSpace.notes || []).findIndex(n => n.id === noteData.id);
+        if (sharedIdx >= 0) {
+          const current = ownerSpace.notes[sharedIdx];
+          const updated = {
+            ...current,
+            title: noteData.title !== undefined ? (noteData.title.trim() || 'Note sans titre') : current.title,
+            color: noteData.color !== undefined ? noteData.color : (current.color || 'default'),
+            pinned: noteData.pinned !== undefined ? Boolean(noteData.pinned) : Boolean(current.pinned),
+            archived: noteData.archived !== undefined ? Boolean(noteData.archived) : Boolean(current.archived),
+            content: noteData.content !== undefined ? noteData.content : (current.content || ''),
+            checklist: Array.isArray(noteData.checklist) ? noteData.checklist : (current.checklist || []),
+            lastEditedBy: editorUser ? (editorUser.name || editorUser.email) : (current.lastEditedBy || null),
+            version: (current.version || 1) + 1,
+            updatedAt: now
+          };
+          ownerSpace.notes[sharedIdx] = updated;
+          writeDB(db);
+          return { ...updated, ownerId, isSharedWithMe: true };
+        }
+      }
+    }
+
+    // 3. Création d'une nouvelle note
+    const newNote = {
+      id: noteData.id || `note_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`,
+      title: (noteData.title || '').trim(),
+      color: noteData.color || 'default',
+      pinned: Boolean(noteData.pinned),
+      archived: Boolean(noteData.archived),
+      content: noteData.content || '',
+      checklist: Array.isArray(noteData.checklist) ? noteData.checklist : [],
+      collabToken: null,
+      collaborators: [],
+      lastEditedBy: editorUser ? (editorUser.name || editorUser.email) : null,
+      version: 1,
+      createdAt: now,
+      updatedAt: now
+    };
+    space.notes.unshift(newNote);
+    writeDB(db);
+    return newNote;
   },
 
   deleteNote(userId, noteId) {
     const db = readDB();
     const space = ensureUserSpace(db, userId);
+    const initialLen = space.notes.length;
     space.notes = space.notes.filter(n => n.id !== noteId);
-    writeDB(db);
-    return true;
+    if (space.notes.length !== initialLen) {
+      writeDB(db);
+      return true;
+    }
+    // Si c'était une note partagée dont l'utilisateur veut juste se retirer
+    for (const [ownerId, ownerSpace] of Object.entries(db.users || {})) {
+      const found = (ownerSpace.notes || []).find(n => n.id === noteId);
+      if (found && Array.isArray(found.collaborators)) {
+        found.collaborators = found.collaborators.filter(c => c.id !== userId && c.email !== userId);
+        writeDB(db);
+        return true;
+      }
+    }
+    return false;
   },
 
-  // === PARTAGE PUBLIC PAR LIEN ===
-  toggleShareNote(userId, noteId, enable) {
+  // === COLLABORATION MULTI-UTILISATEURS EN TEMPS RÉEL VIA LIEN ===
+  enableCollaboration(userId, noteId) {
     const db = readDB();
     const space = ensureUserSpace(db, userId);
-    const note = space.notes.find(n => n.id === noteId);
+    let note = space.notes.find(n => n.id === noteId);
+    let ownerId = userId;
+
+    if (!note) {
+      // Chercher si l'utilisateur est déjà collaborateur sur cette note
+      for (const [oid, ospace] of Object.entries(db.users || {})) {
+        const found = (ospace.notes || []).find(n => n.id === noteId);
+        if (found) {
+          note = found;
+          ownerId = oid;
+          break;
+        }
+      }
+    }
+
     if (!note) throw new Error('Note introuvable');
 
-    if (enable) {
-      if (!note.shareToken) {
-        note.shareToken = crypto.randomBytes(12).toString('base64url');
-      }
-      note.isPublic = true;
-    } else {
-      note.isPublic = false;
-      note.shareToken = null;
+    if (!note.collabToken) {
+      note.collabToken = crypto.randomBytes(12).toString('base64url');
     }
+    if (!Array.isArray(note.collaborators)) {
+      note.collaborators = [];
+    }
+
     note.updatedAt = new Date().toISOString();
     writeDB(db);
-    return note;
+    return { note, ownerId, collabToken: note.collabToken };
   },
 
-  getNoteByShareToken(token) {
+  getNoteByCollabToken(token) {
     if (!token) return null;
     const db = readDB();
-    for (const [uid, space] of Object.entries(db.users || {})) {
-      const found = (space.notes || []).find(n => n.isPublic && n.shareToken === token);
+    for (const [ownerId, space] of Object.entries(db.users || {})) {
+      const found = (space.notes || []).find(n => n.collabToken === token);
       if (found) {
-        const folder = (space.folders || []).find(f => f.id === found.folderId);
-        return {
-          title: found.title,
-          emoji: found.emoji,
-          color: found.color,
-          tags: found.tags,
-          content: found.content,
-          checklist: found.checklist,
-          folderName: folder ? folder.name : 'Notes',
-          updatedAt: found.updatedAt,
-          createdAt: found.createdAt
-        };
+        return { note: found, ownerId };
+      }
+    }
+    return null;
+  },
+
+  joinCollaboration(token, currentUser) {
+    if (!token || !currentUser) return null;
+    const db = readDB();
+    for (const [ownerId, space] of Object.entries(db.users || {})) {
+      const note = (space.notes || []).find(n => n.collabToken === token);
+      if (note) {
+        if (!Array.isArray(note.collaborators)) {
+          note.collaborators = [];
+        }
+        const userUid = currentUser.id || currentUser.email;
+        const exists = note.collaborators.some(c => c.id === userUid || c.email === currentUser.email);
+        if (!exists && userUid !== ownerId) {
+          note.collaborators.push({
+            id: userUid,
+            name: currentUser.name || currentUser.email.split('@')[0],
+            email: currentUser.email,
+            avatar_url: currentUser.avatar_url || null,
+            joinedAt: new Date().toISOString()
+          });
+          writeDB(db);
+        }
+        return { note, ownerId };
+      }
+    }
+    return null;
+  },
+
+  updateCollabNoteContent(token, updateData, user) {
+    const db = readDB();
+    for (const [ownerId, space] of Object.entries(db.users || {})) {
+      const note = (space.notes || []).find(n => n.collabToken === token);
+      if (note) {
+        const now = new Date().toISOString();
+        if (updateData.title !== undefined) note.title = updateData.title.trim();
+        if (updateData.content !== undefined) note.content = updateData.content;
+        if (updateData.color !== undefined) note.color = updateData.color;
+        if (Array.isArray(updateData.checklist)) note.checklist = updateData.checklist;
+        note.lastEditedBy = user ? (user.name || user.email) : 'Collaborateur';
+        note.version = (note.version || 1) + 1;
+        note.updatedAt = now;
+        writeDB(db);
+        return { note, ownerId };
       }
     }
     return null;

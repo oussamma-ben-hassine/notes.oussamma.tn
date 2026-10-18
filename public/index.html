@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Notes — Style Keep & Collaboration en direct | oussamma.tn</title>
+  <title>SyncNote — Collaboration en direct | oussamma.tn</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script>
     (function() {
       try {
-        var t = localStorage.getItem('notevault_theme') || localStorage.getItem('collify_theme') || 'system';
+        var t = localStorage.getItem('syncnote_theme') || localStorage.getItem('notevault_theme') || 'light';
         var dark = t === 'dark' || (t === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
         if (dark) {
           document.documentElement.classList.add('dark');
@@ -22,236 +22,466 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="/styles.css?v=3.0.0" />
+  <link rel="stylesheet" href="/styles.css?v=4.0.0" />
 </head>
 <body>
   <!-- ===================================================================== -->
-  <!-- 1. ÉCRAN D'AUTHENTIFICATION SSO                                       -->
+  <!-- 1. ÉCRAN AUTHENTIFICATION SSO                                         -->
   <!-- ===================================================================== -->
   <div id="auth-wall" class="auth-wall hidden">
     <div class="auth-card">
-      <div class="auth-glow"></div>
-      <div class="auth-icon">💡</div>
-      <div class="auth-badge">ÉCOSYSTÈME OUSSAMMA.TN</div>
-      <h1>Notes & Collaboration</h1>
+      <div class="auth-icon">📝</div>
+      <h1>SyncNote</h1>
       <p class="auth-subtitle">
-        Vos notes simples, rapides et claires inspirées de Google Keep. Modifiez vos notes à plusieurs en temps réel via un lien sécurisé.
+        Collaboration en temps réel & synchronisation instantanée au sein de l'écosystème <strong>oussamma.tn</strong>.
       </p>
-
       <div id="auth-error-box" class="auth-error hidden"></div>
-
-      <a href="/auth/login" class="btn btn-primary btn-lg btn-block">
+      <a href="/auth/login" class="auth-btn-sso">
         🔐 Se connecter avec SSO AuthCore
       </a>
-      <div class="auth-footer">
-        <a href="https://oussamma.tn" target="_blank" rel="noopener">← Retour au Portail oussamma.tn</a>
+      <div style="margin-top: 1.5rem">
+        <a href="https://oussamma.tn" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: none" target="_blank">← Portail oussamma.tn</a>
       </div>
     </div>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- 2. APPLICATION PRINCIPALE : STYLE GOOGLE KEEP SIMPLE & CLAIR         -->
+  <!-- 2. APPLICATION PRINCIPALE : VUE SYNCNOTE EXACTEMENT COMME LA MAQUETTE -->
   <!-- ===================================================================== -->
-  <div id="app-shell" class="app-shell hidden">
-    <!-- BARRE SUPÉRIEURE ÉPURÉE -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <button id="btn-toggle-sidebar" class="icon-btn" title="Menu / Filtres">☰</button>
-        <a href="https://oussamma.tn" class="ecosystem-pill" title="Portail oussamma.tn">🌐 oussamma.tn</a>
-        <div class="app-brand">
-          <span class="app-brand-icon">💡</span>
-          <div>
-            <span class="app-brand-title">Notes</span>
+  <div id="app-shell" class="app-viewport hidden">
+    
+    <!-- EN-TÊTE FIXE SYNCNOTE -->
+    <header class="sync-header">
+      <div class="brand-wrapper">
+        <div class="brand-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div class="brand-title-area">
+          <div class="brand-title-row">
+            <span class="brand-name">SyncNote</span>
+            <span class="space-badge" id="topbar-space-badge">Espace</span>
           </div>
+          <span class="brand-subtitle" id="topbar-subtitle">Notes</span>
         </div>
       </div>
 
-      <!-- RECHERCHE SIMPLE & INSTANTANÉE -->
-      <div class="topbar-center">
-        <div class="search-bar">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="global-search-input" placeholder="Rechercher dans vos notes..." />
-          <button id="btn-clear-search" class="icon-btn-sm hidden" title="Effacer la recherche">✕</button>
-        </div>
-      </div>
-
-      <!-- ACTIONS COMPACTES : THÈME ET PROFIL -->
-      <div class="topbar-right">
-        <button id="btn-theme-toggle" class="icon-btn theme-toggle-btn" title="Basculer Mode Clair (Blanc) / Sombre (Noir)">
+      <div class="header-actions">
+        <button id="btn-theme-toggle" class="icon-btn-ghost" title="Basculer Thème Clair/Sombre">
           <span id="theme-toggle-icon">🌙</span>
         </button>
-
-        <div class="user-profile-pill" id="user-profile-pill">
-          <span class="user-avatar" id="user-avatar">O</span>
-          <span class="user-name" id="user-name">Oussama</span>
-          <a href="/auth/logout" class="logout-link" title="Se déconnecter">⏻</a>
+        <button id="btn-header-search" class="icon-btn-ghost" title="Recherche">
+          🔍
+        </button>
+        <div class="user-avatar-wrap" id="user-avatar-btn" title="Profil utilisateur">
+          <div class="user-avatar-text" id="user-avatar">O</div>
+          <span class="user-status-dot"></span>
         </div>
       </div>
     </header>
 
-    <!-- OVERLAY BACKDROP POUR MOBILE -->
-    <div id="sidebar-backdrop" class="sidebar-backdrop hidden"></div>
+    <!-- BANDEAU STATUT SYNCHRONISÉ (100% / EN DIRECT) -->
+    <div class="sync-status-strip" id="sync-status-strip">
+      <div class="sync-status-left">
+        <span class="pulse-dot"></span>
+        <span id="sync-status-text">Toutes les notes sont synchronisées</span>
+      </div>
+      <div class="sync-status-pct">
+        <span>☁️</span>
+        <span id="sync-status-pct-val">100%</span>
+      </div>
+    </div>
 
-    <!-- CORPS DE L'APPLICATION -->
-    <div class="workspace-body">
-      <!-- BARRE LATÉRALE GOOGLE KEEP -->
-      <aside id="left-sidebar" class="left-sidebar">
-        <ul class="nav-list" id="QuickFiltersList">
-          <li class="nav-item active" data-filter="all">
-            <span>💡 Notes</span>
-            <span class="nav-count" id="count-all">0</span>
-          </li>
-          <li class="nav-item" data-filter="shared">
-            <span>👥 Partagées avec moi</span>
-            <span class="nav-count" id="count-shared">0</span>
-          </li>
-          <li class="nav-item" data-filter="pinned">
-            <span>📌 Épinglées</span>
-            <span class="nav-count" id="count-pinned">0</span>
-          </li>
-          <li class="nav-item" data-filter="archived">
-            <span>🗄️ Archives</span>
-            <span class="nav-count" id="count-archived">0</span>
-          </li>
-        </ul>
-      </aside>
+    <!-- BARRE DE RECHERCHE DÉDIÉE -->
+    <div class="search-container" id="search-container">
+      <div class="search-input-wrap">
+        <span>🔍</span>
+        <input type="text" id="global-search-input" placeholder="Rechercher notes, tags, collabs..." />
+        <button class="filter-icon-btn" id="btn-reset-search" title="Filtres avancés">⚡</button>
+      </div>
+    </div>
 
-      <!-- ZONE CENTRALE : INTERFACE GOOGLE KEEP -->
-      <main class="main-stage">
-        <div class="keep-container">
-          <!-- BARRE DE SAISIE RAPIDE STYLE KEEP -->
-          <div class="keep-quick-capture" id="keep-quick-box">
-            <div class="keep-capture-header">
-              <input type="text" id="keep-quick-title" placeholder="Titre de la note..." />
-              <div class="keep-color-options">
-                <button type="button" class="color-dot active" data-color="default" title="Blanc / Par défaut"></button>
-                <button type="button" class="color-dot" data-color="indigo" title="Bleu"></button>
-                <button type="button" class="color-dot" data-color="emerald" title="Vert"></button>
-                <button type="button" class="color-dot" data-color="amber" title="Jaune"></button>
-                <button type="button" class="color-dot" data-color="rose" title="Rouge"></button>
-                <button type="button" class="color-dot" data-color="cyan" title="Cyan"></button>
-                <button type="button" class="color-dot" data-color="violet" title="Violet"></button>
+    <!-- CAPSULES DE FILTRES HORIZONTALES (Pills) -->
+    <div class="pills-scroll-container" id="notes-pills-bar">
+      <button class="pill-item active" data-filter="all">
+        <span>Toutes</span>
+        <span class="pill-badge" id="pill-count-all">0</span>
+      </button>
+      <button class="pill-item" data-filter="pinned">
+        <span>📌 Épinglées</span>
+        <span class="pill-badge" id="pill-count-pinned">0</span>
+      </button>
+      <button class="pill-item" data-filter="shared">
+        <span>👥 Partagées avec moi</span>
+        <span class="pill-badge" id="pill-count-shared">0</span>
+      </button>
+      <button class="pill-item" data-filter="archived">
+        <span>🗄️ Archives</span>
+        <span class="pill-badge" id="pill-count-archived">0</span>
+      </button>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- PANNEAU 1 : VUE NOTES (Cartes épurées, Épinglées & Récents)          -->
+    <!-- =================================================================== -->
+    <main class="view-panel active" id="view-notes">
+      <!-- Section Épinglées -->
+      <section id="section-pinned-wrap">
+        <div class="section-headline">
+          <div class="section-headline-title">
+            <span>📌</span>
+            <span>Notes épinglées</span>
+          </div>
+          <span class="section-headline-count" id="count-pinned-label">0 notes</span>
+        </div>
+        <div class="cards-flow" id="pinned-notes-list">
+          <!-- Injecté dynamiquement -->
+        </div>
+      </section>
+
+      <!-- Section Récemment modifiées -->
+      <section id="section-recent-wrap">
+        <div class="section-headline">
+          <div class="section-headline-title">
+            <span>🕒</span>
+            <span id="recent-headline-title">Récemment modifiées</span>
+          </div>
+          <span class="section-see-all" id="btn-see-all-notes">Voir tout</span>
+        </div>
+        <div class="cards-flow" id="recent-notes-list">
+          <!-- Injecté dynamiquement -->
+        </div>
+      </section>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- PANNEAU 2 : VUE ÉDITEUR (Document complet en direct avec outils)     -->
+    <!-- =================================================================== -->
+    <main class="view-panel" id="view-editor">
+      <div class="editor-doc-wrap">
+        <div class="editor-status-bar">
+          <div class="live-badge-inline" id="editor-live-badge">
+            <span class="dot"></span>
+            <span id="editor-collab-label">Synchronisé en direct</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <div class="avatar-stack-mini" id="editor-avatars-stack"></div>
+            <button class="icon-btn-ghost" id="btn-editor-collab-share" title="Partager le lien en direct">👥</button>
+            <button class="icon-btn-ghost" id="btn-editor-pin" title="Épingler">📌</button>
+          </div>
+        </div>
+
+        <input type="text" id="editor-doc-title" class="editor-title-input" placeholder="Titre du document..." />
+
+        <div class="editor-meta-row">
+          <span id="editor-save-status">⏱️ Il y a 1 min</span>
+          <span>•</span>
+          <span id="editor-space-tag">📁 Espace Produit</span>
+          <span>•</span>
+          <span id="editor-tags-list" style="color: var(--primary)">#Stratégie #Projet</span>
+        </div>
+
+        <!-- Curseur et bloc d'édition -->
+        <div class="collab-editor-area">
+          <div class="typing-collab-pill" id="editor-typing-pill" style="display: none">
+            <span>●</span>
+            <span id="editor-typing-name">Collaborateur écrit...</span>
+          </div>
+          <textarea id="editor-doc-content" class="editor-textarea" placeholder="Rédigez votre note ici... Les changements sont enregistrés en temps réel et diffusés à tous les participants."></textarea>
+        </div>
+
+        <!-- Tâches prioritaires interactives dans l'éditeur -->
+        <div class="section-headline" style="margin-top: 18px">
+          <div class="section-headline-title">
+            <span style="color: var(--primary)">1.</span>
+            <span>Objectifs prioritaires</span>
+          </div>
+          <button class="icon-btn-ghost" id="btn-add-editor-task" style="font-size: 1.1rem; width: 28px; height: 28px">+</button>
+        </div>
+
+        <div class="card-checklist-box" id="editor-checklist-container">
+          <!-- Injecté dynamiquement -->
+        </div>
+
+        <!-- Note d'équipe Callout -->
+        <div class="team-callout">
+          <div class="callout-icon">💡</div>
+          <div>
+            <div class="callout-title">Note d'équipe</div>
+            <div class="callout-text">
+              Ce document est ouvert à la collaboration multi-utilisateurs. Partagez le lien avec vos collègues pour travailler simultanément.
+            </div>
+          </div>
+        </div>
+
+        <!-- Barre d'outils de formatage en bas de l'éditeur -->
+        <div class="editor-toolbar-floating">
+          <button class="toolbar-btn" data-tool="h1">H1</button>
+          <button class="toolbar-btn" data-tool="h2">H2</button>
+          <button class="toolbar-btn active" data-tool="bold">B</button>
+          <button class="toolbar-btn" data-tool="italic">I</button>
+          <button class="toolbar-btn" data-tool="check">☑</button>
+          <button class="toolbar-btn" data-tool="quote">””</button>
+          <button class="toolbar-btn" data-tool="collab" id="btn-toolbar-collab" style="margin-left: auto; color: var(--primary)">👥 Lien</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- PANNEAU 3 : VUE ESPACES (Shared Spaces)                             -->
+    <!-- =================================================================== -->
+    <main class="view-panel" id="view-spaces">
+      <div style="margin: 14px 0 16px 0; display: flex; align-items: center; justify-content: space-between">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em">Espaces Partagés</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted)">Collaborez en temps réel avec vos équipes</p>
+        </div>
+        <button class="btn-primary-sm" id="btn-create-space" style="border-radius: 20px; padding: 7px 16px">
+          + Créer
+        </button>
+      </div>
+
+      <div class="pills-scroll-container" style="padding: 0 0 16px 0">
+        <button class="pill-item active">Tous les espaces (3)</button>
+        <button class="pill-item">Mes espaces</button>
+        <button class="pill-item">Invité</button>
+      </div>
+
+      <div id="spaces-cards-list">
+        <!-- Espace 1 : Équipe Produit & Design -->
+        <div class="space-card">
+          <div class="space-card-header">
+            <div class="space-icon-title">
+              <div class="space-icon-box">🚀</div>
+              <div>
+                <div class="space-name">Équipe Produit & Design</div>
+                <div class="space-desc">Spécifications, wireframes et roadmaps</div>
               </div>
             </div>
-
-            <textarea id="keep-quick-content" rows="2" placeholder="Créer une note..."></textarea>
-
-            <div class="keep-capture-footer">
-              <span class="keep-hint">💡 Astuce : tapez <code>- [ ]</code> pour créer des cases à cocher</span>
-              <button id="btn-keep-create" class="btn btn-primary btn-sm">Enregistrer</button>
-            </div>
+            <button class="card-options-btn">⋮</button>
           </div>
-
-          <!-- TITRE DE FILTRE ACTIF -->
-          <div id="keep-filter-title" class="keep-view-heading hidden"></div>
-
-          <!-- SECTION ÉPINGLÉES -->
-          <div id="section-pinned" class="keep-section hidden">
-            <div class="section-label">📌 ÉPINGLÉES</div>
-            <div id="keep-pinned-grid" class="keep-cards-grid"></div>
+          <div class="space-badges-row">
+            <span>📄 <strong id="space-notes-count-1">3</strong> notes</span>
+            <span>•</span>
+            <span>👥 <strong>6</strong> membres actifs</span>
           </div>
-
-          <!-- SECTION PRINCIPALE -->
-          <div id="section-others" class="keep-section">
-            <div id="section-others-label" class="section-label hidden">AUTRES NOTES</div>
-            <div id="keep-cards-grid" class="keep-cards-grid">
-              <!-- Injecté dynamiquement -->
+          <div class="space-action-bar">
+            <div class="avatar-stack-mini">
+              <div class="mini-avatar" style="background: #fed7aa; color: #9a3412">T</div>
+              <div class="mini-avatar" style="background: #bbf7d0; color: #166534">S</div>
+              <div class="mini-avatar" style="background: #e9d5ff; color: #6b21a8">M</div>
+              <div class="mini-avatar badge-more">+3</div>
             </div>
+            <button class="pill-item" style="padding: 4px 10px; font-size: 0.75rem" onclick="openCollabForCurrentNote()">
+              + Inviter
+            </button>
           </div>
         </div>
-      </main>
-    </div>
+
+        <!-- Espace 2 : Studio Créatif & Marketing -->
+        <div class="space-card accent-red">
+          <div class="space-card-header">
+            <div class="space-icon-title">
+              <div class="space-icon-box">💡</div>
+              <div>
+                <div class="space-name">Studio Créatif & Marketing</div>
+                <div class="space-desc">Campagnes, contenus et identité visuelle</div>
+              </div>
+            </div>
+            <button class="card-options-btn">⋮</button>
+          </div>
+          <div class="space-badges-row">
+            <span>📄 <strong>15</strong> notes</span>
+            <span>•</span>
+            <span>👥 <strong>4</strong> membres</span>
+          </div>
+          <div class="space-action-bar">
+            <div class="avatar-stack-mini">
+              <div class="mini-avatar" style="background: #fbcfe8; color: #9d174d">A</div>
+              <div class="mini-avatar" style="background: #c7d2fe; color: #3730a3">H</div>
+              <div class="mini-avatar badge-more">+2</div>
+            </div>
+            <button class="pill-item" style="padding: 4px 10px; font-size: 0.75rem" onclick="openCollabForCurrentNote()">
+              + Inviter
+            </button>
+          </div>
+        </div>
+
+        <!-- Espace 3 : Maison & Projets Perso -->
+        <div class="space-card accent-green">
+          <div class="space-card-header">
+            <div class="space-icon-title">
+              <div class="space-icon-box">🏡</div>
+              <div>
+                <div class="space-name">Maison & Projets Perso</div>
+                <div class="space-desc">Budget partagé, voyages et to-do listes</div>
+              </div>
+            </div>
+            <button class="card-options-btn">⋮</button>
+          </div>
+          <div class="space-badges-row">
+            <span>📄 <strong>8</strong> notes</span>
+            <span>•</span>
+            <span>👥 <strong>2</strong> membres</span>
+          </div>
+          <div class="space-action-bar">
+            <div class="avatar-stack-mini">
+              <div class="mini-avatar" style="background: #fed7aa; color: #9a3412">O</div>
+              <div class="mini-avatar" style="background: #d9f99d; color: #3f6212">M</div>
+            </div>
+            <button class="pill-item" style="padding: 4px 10px; font-size: 0.75rem" onclick="openCollabForCurrentNote()">
+              + Partager
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- PANNEAU 4 : VUE ACTIVITÉ (Activity Feed en temps réel)              -->
+    <!-- =================================================================== -->
+    <main class="view-panel" id="view-activity">
+      <div style="margin: 14px 0 14px 0; display: flex; align-items: center; justify-content: space-between">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em">Activité Récente</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted)">Historique en temps réel des modifications</p>
+        </div>
+      </div>
+
+      <div class="pills-scroll-container" style="padding: 0 0 14px 0">
+        <button class="pill-item active">Tout (5)</button>
+        <button class="pill-item">@ Mentions</button>
+        <button class="pill-item">Modifications</button>
+      </div>
+
+      <div id="activity-feed-list">
+        <!-- Activité 1 -->
+        <div class="activity-card">
+          <div class="activity-header">
+            <div class="activity-user-row">
+              <div class="activity-avatar">T</div>
+              <div>
+                <div class="activity-title">Thomas R. a modifié</div>
+                <div class="activity-subtitle">📄 Roadmap Produit Q3</div>
+              </div>
+            </div>
+            <span class="activity-time">Il y a 12m</span>
+          </div>
+          <div class="activity-diff-box">
+            <span style="color: var(--sync-green); font-weight: 700">+ Ajout :</span> Ajout de la section MVP et échéances pour le déploiement multi-région.
+          </div>
+        </div>
+
+        <!-- Activité 2 : Mention -->
+        <div class="activity-card activity-mention">
+          <div class="activity-header">
+            <div class="activity-user-row">
+              <div class="activity-avatar" style="background: #fbcfe8; color: #9d174d">S</div>
+              <div>
+                <div class="activity-title">Sarah M. vous a mentionné</div>
+                <div class="activity-subtitle">📋 Revue Sprint 14</div>
+              </div>
+            </div>
+            <span class="activity-time">Il y a 1h</span>
+          </div>
+          <div class="activity-diff-box">
+            <span style="color: #ef4444; font-weight: 700">@Vous :</span> Peux-tu valider ce point de sécurité avant ce soir ? Les équipes mobiles attendent notre feu vert.
+          </div>
+        </div>
+
+        <!-- Activité 3 : Espace rejoint -->
+        <div class="activity-card">
+          <div class="activity-header">
+            <div class="activity-user-row">
+              <div class="activity-avatar" style="background: #bbf7d0; color: #166534">M</div>
+              <div>
+                <div class="activity-title">Marc V. a rejoint l'espace</div>
+                <div class="activity-subtitle">🚀 Équipe Produit & Design</div>
+              </div>
+            </div>
+            <span class="activity-time">Il y a 3h</span>
+          </div>
+          <div class="activity-diff-box">
+            🛡️ Rôle attribué : <strong>Éditeur</strong>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- FLOATING ACTION BUTTON "+ Nouvelle" (FAB)                           -->
+    <!-- =================================================================== -->
+    <button class="fab-new-note" id="btn-fab-new-note">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Nouvelle</span>
+    </button>
+
+    <!-- =================================================================== -->
+    <!-- BARRE DE NAVIGATION INFÉRIEURE (4 Onglets)                          -->
+    <!-- =================================================================== -->
+    <nav class="bottom-nav">
+      <button class="nav-tab-btn active" data-tab="notes">
+        <span class="tab-icon">📄</span>
+        <span>Notes</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="editor">
+        <span class="tab-icon">✍️</span>
+        <span>Éditeur</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="spaces">
+        <span class="tab-icon">🗂️</span>
+        <span>Espaces</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="activity">
+        <span class="tab-icon">🔔</span>
+        <span>Activité</span>
+        <span class="nav-tab-badge"></span>
+      </button>
+    </nav>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL 1 : ÉDITION COMPLÈTE DE LA CARTE / NOTE (STYLE GOOGLE KEEP)    -->
-  <!-- ===================================================================== -->
-  <div id="modal-edit-note" class="modal-backdrop hidden">
-    <div class="modal-card modal-keep-edit" id="modal-keep-card">
-      <div class="modal-header">
-        <input type="text" id="edit-note-title" class="edit-modal-title" placeholder="Titre..." />
-        <div class="modal-header-actions">
-          <button id="btn-edit-pin" class="icon-btn-sm" title="Épingler la note">📌</button>
-          <button id="btn-edit-collab" class="btn btn-primary btn-xs" title="Collaborer en temps réel">👥 Collaborer</button>
-          <button id="btn-edit-archive" class="icon-btn-sm" title="Archiver">🗄️</button>
-          <button id="btn-edit-delete" class="icon-btn-sm danger" title="Supprimer">🗑️</button>
-          <button class="icon-btn-sm" data-close-modal="modal-edit-note" title="Fermer">✕</button>
-        </div>
-      </div>
-
-      <div class="modal-body">
-        <div id="collab-live-badge" class="collab-live-badge hidden">
-          <span class="live-dot"></span>
-          <span id="collab-status-text">Synchronisation en direct</span>
-          <div id="collab-avatars" class="collab-avatars"></div>
-        </div>
-
-        <textarea id="edit-note-content" class="edit-modal-content" rows="8" placeholder="Contenu de la note..."></textarea>
-
-        <!-- Checklist interactive -->
-        <div id="edit-note-checklist-box" class="edit-checklist-box">
-          <div id="edit-checklist-items" class="checklist-items"></div>
-          <div class="checklist-add-row">
-            <input type="text" id="edit-new-chk-input" placeholder="+ Ajouter une tâche (Entrée)..." />
-            <button id="btn-add-chk-item" class="btn btn-secondary btn-xs">Ajouter</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer edit-modal-footer">
-        <div class="keep-color-options">
-          <button type="button" class="color-dot active" data-edit-color="default" title="Blanc / Par défaut"></button>
-          <button type="button" class="color-dot" data-edit-color="indigo" title="Bleu"></button>
-          <button type="button" class="color-dot" data-edit-color="emerald" title="Vert"></button>
-          <button type="button" class="color-dot" data-edit-color="amber" title="Jaune"></button>
-          <button type="button" class="color-dot" data-edit-color="rose" title="Rouge"></button>
-          <button type="button" class="color-dot" data-edit-color="cyan" title="Cyan"></button>
-          <button type="button" class="color-dot" data-edit-color="violet" title="Violet"></button>
-        </div>
-
-        <div class="edit-footer-right">
-          <span id="edit-save-indicator" class="save-indicator">✓ Enregistré</span>
-          <button class="btn btn-secondary btn-sm" data-close-modal="modal-edit-note">Fermer</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- MODAL 2 : LIEN DE COLLABORATION EN TEMPS RÉEL (PARTAGE PARTICIPANTS)  -->
+  <!-- MODAL : LIEN DE COLLABORATION & INVITATION TEMPS RÉEL                 -->
   <!-- ===================================================================== -->
   <div id="modal-collab" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>👥 Collaborer sur cette note en temps réel</h3>
-        <button class="icon-btn-sm" data-close-modal="modal-collab">✕</button>
+        <h3>👥 Collaborer en direct</h3>
+        <button class="icon-btn-ghost" data-close-modal="modal-collab">✕</button>
       </div>
-      <div class="modal-body">
-        <p class="modal-desc">
-          Partagez ce lien avec d'autres personnes connectées. <strong>Toute personne disposant du lien peut modifier la note en même temps que vous</strong>, et elle apparaîtra directement dans leurs <strong>"👥 Partagées avec moi"</strong> !
+      <div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5">
+          Toute personne ouvrant ce lien rejoint cette note en direct, ses modifications s'affichent instantanément et la note s'ajoute à ses notes partagées.
         </p>
-
         <div class="share-url-box">
           <input type="text" id="collab-share-url-input" readonly />
-          <button id="btn-copy-collab-url" class="btn btn-primary btn-sm">📋 Copier le lien</button>
+          <button id="btn-copy-collab-url" class="btn-primary-sm">📋 Copier</button>
         </div>
 
-        <div class="collab-participants-section">
-          <h4>Collaborateurs sur cette note (<span id="collab-participants-count">0</span>)</h4>
-          <div id="collab-participants-list" class="collab-participants-list">
-            <!-- Liste des collaborateurs -->
-          </div>
+        <div style="margin-top: 18px">
+          <h4 style="font-size: 0.88rem; font-weight: 800; margin-bottom: 8px">
+            Participants connectés (<span id="collab-participants-count">0</span>)
+          </h4>
+          <div id="collab-participants-list" style="display: flex; flex-direction: column; gap: 8px"></div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-close-modal="modal-collab">Fermer</button>
+      <div style="margin-top: 20px; text-align: right">
+        <button class="pill-item" data-close-modal="modal-collab">Fermer</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast de notification -->
+  <!-- Conteneur Toasts -->
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="/app.js"></script>
+  <script src="/app.js?v=4.0.0"></script>
 </body>
 </html>

@@ -1,16 +1,19 @@
 // =============================================================================
 // SYNCNOTE (notes.oussamma.tn) — Frontend Controller
 // Inspiré des maquettes SyncNote :
-// - Multi-onglets : Notes, Éditeur, Espaces, Activité
+// - Multi-onglets dynamiques : Notes, Éditeur, Espaces, Activité
+// - Zéro fausse donnée de test en dur : uniquement les notes, espaces et activités réels
+// - Icônes SVG haute fidélité et palettes de couleurs exactes
 // - Co-édition en temps réel (SSE + Traefik no-buffering + curseur préservé)
-// - Cartes avec tags (#Stratégie, #Urgent), checklist, avatargroups et time
 // =============================================================================
 
 const state = {
   user: null,
-  theme: localStorage.getItem('syncnote_theme') || localStorage.getItem('notevault_theme') || 'light',
+  theme: localStorage.getItem('syncnote_theme') || 'light',
   currentTab: 'notes', // 'notes' | 'editor' | 'spaces' | 'activity'
   notes: [],
+  folders: [],
+  activities: [],
   filterType: 'all', // 'all' | 'pinned' | 'shared' | 'archived'
   searchQuery: '',
   editingNoteId: null,
@@ -33,9 +36,26 @@ function applyTheme(themeName) {
     document.documentElement.classList.remove('dark');
   }
   localStorage.setItem('syncnote_theme', state.theme);
-  const icon = document.getElementById('theme-toggle-icon');
-  if (icon) {
-    icon.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+
+  const iconEl = document.getElementById('theme-icon-svg');
+  if (iconEl) {
+    if (state.theme === 'dark') {
+      // Icône soleil
+      iconEl.innerHTML = `
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      `;
+    } else {
+      // Icône lune
+      iconEl.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+    }
   }
 }
 
@@ -57,7 +77,19 @@ function showToast(msg) {
   el.className = 'toast';
   el.textContent = msg;
   container.appendChild(el);
-  setTimeout(() => el.remove(), 3200);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return 'Récemment';
+  const diffSec = Math.floor((new Date() - new Date(dateStr)) / 1000);
+  if (diffSec < 60) return "À l'instant";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `Il y a ${diffHours} h`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `Il y a ${diffDays} j`;
 }
 
 // =============================================================================
@@ -94,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('auth-wall').classList.add('hidden');
     document.getElementById('app-shell').classList.remove('hidden');
 
-    await loadNotes();
+    await loadInitialData();
     bindEvents();
     connectUserLiveSSE();
 
@@ -109,8 +141,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // =============================================================================
-// CHARGEMENT DES NOTES
+// CHARGEMENT DES DONNÉES RÉELLES (Notes, Espaces, Activité)
 // =============================================================================
+async function loadInitialData() {
+  await Promise.all([
+    loadNotes(),
+    loadFolders(),
+    loadActivities()
+  ]);
+}
+
 async function loadNotes() {
   try {
     const res = await fetch('/api/notes?archived=all');
@@ -120,6 +160,30 @@ async function loadNotes() {
     }
   } catch (err) {
     console.error('Erreur chargement notes:', err);
+  }
+}
+
+async function loadFolders() {
+  try {
+    const res = await fetch('/api/folders');
+    if (res.ok) {
+      state.folders = await res.json();
+      renderSpacesView();
+    }
+  } catch (err) {
+    console.error('Erreur chargement espaces:', err);
+  }
+}
+
+async function loadActivities() {
+  try {
+    const res = await fetch('/api/activities');
+    if (res.ok) {
+      state.activities = await res.json();
+      renderActivityView();
+    }
+  } catch (err) {
+    console.error('Erreur chargement activités:', err);
   }
 }
 
@@ -146,9 +210,9 @@ function switchTab(tabName) {
     subtitle.textContent = labels[tabName] || 'Notes';
   }
 
-  // Masquer la barre de recherche dans l'éditeur pour maximiser l'espace
   const searchBar = document.getElementById('search-container');
   const pillsBar = document.getElementById('notes-pills-bar');
+
   if (tabName === 'editor') {
     searchBar?.classList.add('hidden');
     pillsBar?.classList.add('hidden');
@@ -159,6 +223,8 @@ function switchTab(tabName) {
   } else {
     searchBar?.classList.add('hidden');
     pillsBar?.classList.add('hidden');
+    if (tabName === 'spaces') renderSpacesView();
+    if (tabName === 'activity') renderActivityView();
   }
 }
 
@@ -195,7 +261,6 @@ function renderNotesView() {
   const sharedNotes = state.notes.filter(n => !n.archived && n.isSharedWithMe);
   const archivedNotes = state.notes.filter(n => n.archived);
 
-  // Mise à jour des compteurs dans les badges
   document.getElementById('pill-count-all').textContent = activeNotes.length;
   document.getElementById('pill-count-pinned').textContent = pinnedNotes.length;
   document.getElementById('pill-count-shared').textContent = sharedNotes.length;
@@ -215,9 +280,16 @@ function renderNotesView() {
     if (recent.length === 0 && pinnedNotes.length === 0) {
       recentList.innerHTML = `
         <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted)">
-          <div style="font-size: 2.8rem; margin-bottom: 0.6rem">📝</div>
-          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.3rem">Aucune note pour l'instant</h3>
-          <p style="font-size: 0.85rem">Cliquez sur "+ Nouvelle" ci-dessous pour rédiger votre première note ou partager avec votre équipe.</p>
+          <div style="width: 48px; height: 48px; margin: 0 auto 12px auto; color: var(--sync-purple)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px">Aucune note pour l'instant</h3>
+          <p style="font-size: 0.85rem">Cliquez sur "+ Nouvelle" ci-dessous pour rédiger une note ou partager avec un collaborateur.</p>
         </div>
       `;
     } else {
@@ -228,7 +300,6 @@ function renderNotesView() {
     if (filtered.length === 0) {
       recentList.innerHTML = `
         <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted)">
-          <div style="font-size: 2rem; margin-bottom: 0.5rem">🔍</div>
           <p style="font-size: 0.9rem">Aucune note trouvée dans cette sélection.</p>
         </div>
       `;
@@ -244,7 +315,7 @@ function renderCardHtml(note) {
   const cleanBody = (note.content || '').replace(/^- \[[ x]\]\s*.+$/gm, '').trim();
 
   // Tags badge
-  const tags = Array.isArray(note.tags) && note.tags.length > 0 ? note.tags : ['#Stratégie'];
+  const tags = Array.isArray(note.tags) && note.tags.length > 0 ? note.tags : ['#Projet'];
   const tagsHtml = tags.map(tag => {
     let cls = 'tag-strategy';
     if (tag.toLowerCase().includes('urgent')) cls = 'tag-urgent';
@@ -274,7 +345,13 @@ function renderCardHtml(note) {
         <div class="card-tags-list">
           ${tagsHtml}
         </div>
-        <button class="card-options-btn" data-card-options="${note.id}" title="Options de note">⋮</button>
+        <button class="icon-btn-ghost" data-card-options="${note.id}" title="Options" style="width: 28px; height: 28px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+          </svg>
+        </button>
       </div>
 
       <div class="card-title">${escapeHtml(note.title || 'Sans titre')}</div>
@@ -291,19 +368,129 @@ function renderCardHtml(note) {
             </div>
             <span class="live-badge-inline"><span class="dot"></span> En direct</span>
           ` : `
-            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600">
+            <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 600">
               ${note.isSharedWithMe ? '👥 Partagée' : '👤 Privé'}
             </span>
           `}
         </div>
 
         <div class="card-time-info">
-          <span>🕒</span>
-          <span>${note.lastEditedBy ? escapeHtml(note.lastEditedBy) : 'Modifié hier'}</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>${timeAgo(note.updatedAt || note.createdAt)}</span>
         </div>
       </div>
     </div>
   `;
+}
+
+// =============================================================================
+// RENDU DE LA VUE ESPACES (Dossiers réels de l'utilisateur)
+// =============================================================================
+function renderSpacesView() {
+  const container = document.getElementById('spaces-cards-list');
+  const countEl = document.getElementById('spaces-count');
+  if (!container) return;
+
+  const folders = state.folders || [];
+  if (countEl) countEl.textContent = folders.length;
+
+  if (folders.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted)">
+        <p style="font-size: 0.9rem">Aucun espace pour le moment. Cliquez sur "+ Créer" ci-dessus.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = folders.map((folder, idx) => {
+    // Calculer les notes réelles associées à ce dossier
+    const folderNotes = state.notes.filter(n => n.folderId === folder.id);
+    const borderCls = idx % 3 === 0 ? '' : (idx % 3 === 1 ? 'accent-red' : 'accent-green');
+
+    return `
+      <div class="space-card ${borderCls}">
+        <div class="space-card-header">
+          <div class="space-icon-title">
+            <div class="space-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="space-name">${escapeHtml(folder.name)}</div>
+              <div class="space-desc">Espace de travail collaboratif</div>
+            </div>
+          </div>
+          <button class="icon-btn-ghost" data-delete-folder="${folder.id}" title="Supprimer cet espace">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-badges-row">
+          <span>📄 <strong>${folderNotes.length}</strong> note(s)</span>
+          <span>•</span>
+          <span>👥 <strong>1</strong> membre actif</span>
+        </div>
+
+        <div class="space-action-bar">
+          <div class="avatar-stack-mini">
+            <div class="mini-avatar">${(state.user?.name || 'U')[0].toUpperCase()}</div>
+          </div>
+          <button class="pill-item" style="padding: 4px 12px; font-size: 0.75rem" onclick="openCollabForCurrentNote()">
+            + Partager
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// =============================================================================
+// RENDU DE LA VUE ACTIVITÉ (Activités réelles générées par l'utilisateur)
+// =============================================================================
+function renderActivityView() {
+  const container = document.getElementById('activity-feed-list');
+  const countEl = document.getElementById('activity-count');
+  if (!container) return;
+
+  const acts = state.activities || [];
+  if (countEl) countEl.textContent = acts.length;
+
+  if (acts.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted)">
+        <p style="font-size: 0.9rem">Aucune activité enregistrée pour le moment. Vos modifications apparaîtront ici.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = acts.map(act => `
+    <div class="activity-card">
+      <div class="activity-header">
+        <div class="activity-user-row">
+          <div class="activity-avatar">${(act.userName || 'U')[0].toUpperCase()}</div>
+          <div>
+            <div class="activity-title">${escapeHtml(act.title)}</div>
+            <div class="activity-subtitle">📄 ${escapeHtml(act.noteTitle)}</div>
+          </div>
+        </div>
+        <span class="activity-time">${timeAgo(act.timestamp)}</span>
+      </div>
+      ${act.diff ? `
+        <div class="activity-diff-box">
+          <span style="color: var(--sync-purple); font-weight: 700">Dernière modif :</span> ${escapeHtml(act.diff)}
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
 }
 
 // =============================================================================
@@ -318,16 +505,12 @@ function openNoteInEditor(noteId) {
 
   document.getElementById('editor-doc-title').value = note.title || '';
   document.getElementById('editor-doc-content').value = note.content || '';
-  document.getElementById('editor-save-status').textContent = '✓ Synchronisé';
+  document.getElementById('editor-save-status').textContent = '⏱️ Synchronisé';
   document.getElementById('btn-editor-pin').classList.toggle('active', Boolean(note.pinned));
 
-  // Rendu de la checklist de l'éditeur
   renderEditorChecklist(note);
-
-  // Rendu des avatars
   updateEditorAvatars(note.collaborators || []);
 
-  // Si collaborative, brancher le SSE en direct
   if (note.collabToken) {
     document.getElementById('editor-live-badge').classList.remove('hidden');
     connectLiveCollabSSE(note.collabToken);
@@ -346,8 +529,8 @@ function renderEditorChecklist(note) {
 
   if (list.length === 0) {
     container.innerHTML = `
-      <div style="font-size: 0.78rem; color: var(--text-muted); padding: 4px">
-        Aucune tâche. Cliquez sur "+" ci-dessus pour ajouter des objectifs prioritaires.
+      <div style="font-size: 0.8rem; color: var(--text-muted); padding: 4px">
+        Aucun objectif pour l'instant. Cliquez sur "+" ci-dessus pour en ajouter.
       </div>
     `;
     return;
@@ -357,7 +540,12 @@ function renderEditorChecklist(note) {
     <div class="card-chk-row ${item.done ? 'done' : ''}">
       <input type="checkbox" data-editor-chk-idx="${idx}" ${item.done ? 'checked' : ''} />
       <span style="flex: 1">${escapeHtml(item.text)}</span>
-      <button class="icon-btn-ghost" data-editor-del-chk="${idx}" style="font-size: 0.75rem; width: 22px; height: 22px">✕</button>
+      <button class="icon-btn-ghost" data-editor-del-chk="${idx}" style="width: 22px; height: 22px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
   `).join('');
 }
@@ -372,7 +560,6 @@ function updateEditorAvatars(collabs) {
   `).join('');
 }
 
-// Auto-sauvegarde fluide avec debounce 200ms
 function scheduleEditorAutoSave() {
   if (state.isRemoteUpdating) return;
   const statusEl = document.getElementById('editor-save-status');
@@ -419,15 +606,16 @@ async function saveEditorNoteNow() {
       if (idx >= 0) state.notes[idx] = { ...state.notes[idx], ...updated };
 
       const statusEl = document.getElementById('editor-save-status');
-      if (statusEl) statusEl.textContent = '✓ Synchronisé';
+      if (statusEl) statusEl.textContent = '⏱️ Synchronisé';
       renderNotesView();
+      loadActivities(); // Rafraîchir l'activité en temps réel
     }
   } catch (err) {
     console.error('Erreur sauvegarde éditeur:', err);
   }
 }
 
-// Création d'une nouvelle note via le bouton FAB "+ Nouvelle"
+// Création d'une nouvelle note via le FAB "+ Nouvelle"
 async function handleCreateNewNote() {
   try {
     const res = await fetch('/api/notes', {
@@ -437,9 +625,7 @@ async function handleCreateNewNote() {
         title: 'Nouvelle note',
         content: '',
         tags: ['#Projet'],
-        checklist: [
-          { id: `chk_${Date.now()}_1`, text: 'Définir les étapes clés', done: false }
-        ]
+        checklist: []
       })
     });
 
@@ -500,7 +686,7 @@ function connectLiveCollabSSE(collabToken) {
         const pill = document.getElementById('editor-typing-pill');
         const nameEl = document.getElementById('editor-typing-name');
         if (pill && nameEl && data.updatedBy) {
-          nameEl.textContent = `${data.updatedBy} modifie...`;
+          nameEl.textContent = `${data.updatedBy} écrit...`;
           pill.style.display = 'inline-flex';
           setTimeout(() => { pill.style.display = 'none'; }, 2000);
         }
@@ -548,12 +734,13 @@ function connectUserLiveSSE() {
       else state.notes.unshift({ ...updatedNote, isSharedWithMe: true });
 
       renderNotesView();
+      loadActivities();
     } catch (err) {}
   });
 }
 
 // =============================================================================
-// GESTION DU MODAL COLLABORATION
+// MODAL COLLABORATION
 // =============================================================================
 async function openCollabForCurrentNote() {
   let note = state.notes.find(n => n.id === state.editingNoteId);
@@ -576,9 +763,9 @@ async function openCollabForCurrentNote() {
     countEl.textContent = collabs.length;
 
     listEl.innerHTML = collabs.length === 0
-      ? `<div style="font-size:0.75rem;color:var(--text-muted)">Aucun collaborateur pour l'instant. Envoyez-leur ce lien !</div>`
+      ? `<div style="font-size:0.8rem;color:var(--text-muted)">Aucun collaborateur pour l'instant. Envoyez-leur ce lien !</div>`
       : collabs.map(c => `
-        <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem">
+        <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem">
           <div class="mini-avatar">${(c.name || c.email || 'U')[0].toUpperCase()}</div>
           <strong>${escapeHtml(c.name || c.email)}</strong>
         </div>
@@ -624,7 +811,7 @@ function bindEvents() {
     showToast(next === 'dark' ? '🌙 Mode Sombre' : '☀️ Mode Clair');
   });
 
-  // Navigation onglets (Bottom Nav)
+  // Bottom Navigation Tabs
   document.querySelectorAll('.bottom-nav .nav-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       switchTab(btn.dataset.tab);
@@ -669,13 +856,33 @@ function bindEvents() {
       e.stopPropagation();
       const nId = optBtn.dataset.cardOptions;
       const note = state.notes.find(n => n.id === nId);
-      if (note && confirm(`Que souhaitez-vous faire avec "${note.title}" ?\n\nCliquez sur OK pour Épingler/Désépingler, ou Annuler pour fermer.`)) {
-        note.pinned = !note.pinned;
-        fetch(`/api/notes/${note.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(note)
-        }).then(() => renderNotesView());
+      if (note) {
+        const choice = confirm(`Note : "${note.title}"\n\nCliquez sur OK pour Épingler/Désépingler, ou Annuler pour fermer.`);
+        if (choice) {
+          note.pinned = !note.pinned;
+          fetch(`/api/notes/${note.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(note)
+          }).then(() => renderNotesView());
+        }
+      }
+      return;
+    }
+
+    // Supprimer un espace
+    const delFolderBtn = e.target.closest('[data-delete-folder]');
+    if (delFolderBtn) {
+      e.stopPropagation();
+      const fId = delFolderBtn.dataset.deleteFolder;
+      if (confirm('Supprimer cet espace de travail ?')) {
+        fetch(`/api/folders/${fId}`, { method: 'DELETE' })
+          .then(res => res.json())
+          .then(data => {
+            state.folders = data.folders || [];
+            renderSpacesView();
+            showToast('🗑️ Espace supprimé');
+          });
       }
       return;
     }
@@ -688,7 +895,7 @@ function bindEvents() {
     }
   });
 
-  // Case à cocher cochée depuis la carte
+  // Case à cocher sur la carte
   document.addEventListener('change', async e => {
     if (e.target.matches('input[data-chk-note]')) {
       const nId = e.target.dataset.chkNote;
@@ -706,6 +913,28 @@ function bindEvents() {
     }
   });
 
+  // Création d'espace réel
+  document.getElementById('btn-create-space')?.addEventListener('click', async () => {
+    const spaceName = prompt("Nom du nouvel espace :");
+    if (!spaceName || !spaceName.trim()) return;
+
+    try {
+      const res = await fetch('/api/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: spaceName.trim(), icon: '📁', color: '#4f46e5' })
+      });
+      if (res.ok) {
+        const created = await res.json();
+        state.folders.push(created);
+        renderSpacesView();
+        showToast('📁 Espace créé');
+      }
+    } catch (err) {
+      console.error('Erreur création espace:', err);
+    }
+  });
+
   // FAB "+ Nouvelle"
   document.getElementById('btn-fab-new-note')?.addEventListener('click', handleCreateNewNote);
 
@@ -713,7 +942,7 @@ function bindEvents() {
   document.getElementById('editor-doc-title')?.addEventListener('input', scheduleEditorAutoSave);
   document.getElementById('editor-doc-content')?.addEventListener('input', scheduleEditorAutoSave);
 
-  // Bouton partager collab depuis l'éditeur
+  // Partager collab depuis l'éditeur
   document.getElementById('btn-editor-collab-share')?.addEventListener('click', openCollabForCurrentNote);
   document.getElementById('btn-toolbar-collab')?.addEventListener('click', openCollabForCurrentNote);
 

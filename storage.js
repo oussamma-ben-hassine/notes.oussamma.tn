@@ -70,6 +70,7 @@ function ensureUserSpace(db, userId) {
     db.users[safeId] = {
       folders: JSON.parse(JSON.stringify(DEFAULT_FOLDERS)),
       notes: JSON.parse(JSON.stringify(DEFAULT_NOTES)),
+      activities: [],
       chatHistory: [
         {
           id: 'msg_welcome',
@@ -375,6 +376,32 @@ export const Storage = {
       }
     }
     return null;
+  },
+
+  // === ACTIVITÉS & HISTORIQUE EN TEMPS RÉEL ===
+  getActivities(userId) {
+    const db = readDB();
+    const space = ensureUserSpace(db, userId);
+    return space.activities || [];
+  },
+
+  recordActivity(userId, activity) {
+    const db = readDB();
+    const space = ensureUserSpace(db, userId);
+    if (!Array.isArray(space.activities)) space.activities = [];
+    const item = {
+      id: `act_${Date.now()}_${crypto.randomBytes(2).toString('hex')}`,
+      type: activity.type || 'modification', // 'modification' | 'mention' | 'joined'
+      title: activity.title,
+      noteTitle: activity.noteTitle || 'Note',
+      userName: activity.userName || 'Utilisateur',
+      diff: activity.diff || '',
+      timestamp: new Date().toISOString()
+    };
+    space.activities.unshift(item);
+    if (space.activities.length > 50) space.activities.pop();
+    writeDB(db);
+    return item;
   },
 
   // === HISTORIQUE DE CHAT CORTEX IA ===

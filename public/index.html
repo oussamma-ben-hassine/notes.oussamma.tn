@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SyncNote — Collaboration en direct | oussamma.tn</title>
+  <title>SyncNote — oussamma.tn</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script>
     (function() {
       try {
-        var t = localStorage.getItem('syncnote_theme') || localStorage.getItem('notevault_theme') || 'light';
+        var t = localStorage.getItem('syncnote_theme') || 'light';
         var dark = t === 'dark' || (t === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
         if (dark) {
           document.documentElement.classList.add('dark');
@@ -22,39 +22,44 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="stylesheet" href="/styles.css?v=4.0.0" />
+  <link rel="stylesheet" href="/styles.css?v=5.0.0" />
 </head>
 <body>
   <!-- ===================================================================== -->
   <!-- 1. ÉCRAN AUTHENTIFICATION SSO                                         -->
   <!-- ===================================================================== -->
-  <div id="auth-wall" class="auth-wall hidden">
-    <div class="auth-card">
-      <div class="auth-icon">📝</div>
-      <h1>SyncNote</h1>
-      <p class="auth-subtitle">
-        Collaboration en temps réel & synchronisation instantanée au sein de l'écosystème <strong>oussamma.tn</strong>.
-      </p>
-      <div id="auth-error-box" class="auth-error hidden"></div>
-      <a href="/auth/login" class="auth-btn-sso">
-        🔐 Se connecter avec SSO AuthCore
-      </a>
-      <div style="margin-top: 1.5rem">
-        <a href="https://oussamma.tn" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: none" target="_blank">← Portail oussamma.tn</a>
+  <div id="auth-wall" class="modal-backdrop hidden" style="background: var(--bg-app); z-index: 1000">
+    <div class="modal-card" style="text-align: center; max-width: 420px; padding: 32px 24px">
+      <div class="brand-icon-box" style="margin: 0 auto 16px auto; width: 56px; height: 56px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
       </div>
+      <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 6px">SyncNote</h1>
+      <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px">
+        Vos notes et documents partagés en temps réel au sein de l'écosystème <strong>oussamma.tn</strong>.
+      </p>
+      <div id="auth-error-box" style="background: var(--badge-urgent-bg); color: var(--badge-urgent-text); padding: 10px; border-radius: 12px; margin-bottom: 14px; font-size: 0.85rem; font-weight: 700" class="hidden"></div>
+      <a href="/auth/login" class="btn-primary-sm" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border-radius: 16px; font-size: 0.95rem; text-decoration: none">
+        <span>🔐 Se connecter avec SSO AuthCore</span>
+      </a>
     </div>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- 2. APPLICATION PRINCIPALE : VUE SYNCNOTE EXACTEMENT COMME LA MAQUETTE -->
+  <!-- 2. APPLICATION PRINCIPALE : VUE EXACTE DES MAQUETTES                  -->
   <!-- ===================================================================== -->
   <div id="app-shell" class="app-viewport hidden">
     
-    <!-- EN-TÊTE FIXE SYNCNOTE -->
+    <!-- EN-TÊTE FIXE SYNCNOTE AVEC VRAIS SVG ICONS -->
     <header class="sync-header">
       <div class="brand-wrapper">
         <div class="brand-icon-box">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
             <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -72,12 +77,22 @@
       </div>
 
       <div class="header-actions">
+        <!-- Bouton Thème Clair/Sombre -->
         <button id="btn-theme-toggle" class="icon-btn-ghost" title="Basculer Thème Clair/Sombre">
-          <span id="theme-toggle-icon">🌙</span>
+          <svg id="theme-icon-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
         </button>
-        <button id="btn-header-search" class="icon-btn-ghost" title="Recherche">
-          🔍
+
+        <!-- Bouton Loupe Recherche -->
+        <button id="btn-header-search" class="icon-btn-ghost" title="Rechercher">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
         </button>
+
+        <!-- Avatar Utilisateur avec point vert connecté -->
         <div class="user-avatar-wrap" id="user-avatar-btn" title="Profil utilisateur">
           <div class="user-avatar-text" id="user-avatar">O</div>
           <span class="user-status-dot"></span>
@@ -85,14 +100,16 @@
       </div>
     </header>
 
-    <!-- BANDEAU STATUT SYNCHRONISÉ (100% / EN DIRECT) -->
+    <!-- BANDEAU DE STATUT DE SYNCHRONISATION -->
     <div class="sync-status-strip" id="sync-status-strip">
       <div class="sync-status-left">
         <span class="pulse-dot"></span>
-        <span id="sync-status-text">Toutes les notes sont synchronisées</span>
+        <span id="sync-status-text">Toutes les activités sont synchronisées...</span>
       </div>
       <div class="sync-status-pct">
-        <span>☁️</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+        </svg>
         <span id="sync-status-pct-val">100%</span>
       </div>
     </div>
@@ -100,28 +117,46 @@
     <!-- BARRE DE RECHERCHE DÉDIÉE -->
     <div class="search-container" id="search-container">
       <div class="search-input-wrap">
-        <span>🔍</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-hint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
         <input type="text" id="global-search-input" placeholder="Rechercher notes, tags, collabs..." />
-        <button class="filter-icon-btn" id="btn-reset-search" title="Filtres avancés">⚡</button>
+        <button class="filter-icon-btn" id="btn-reset-search" title="Filtres">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+        </button>
       </div>
     </div>
 
-    <!-- CAPSULES DE FILTRES HORIZONTALES (Pills) -->
+    <!-- CAPSULES DE FILTRES (Pills) -->
     <div class="pills-scroll-container" id="notes-pills-bar">
       <button class="pill-item active" data-filter="all">
         <span>Toutes</span>
         <span class="pill-badge" id="pill-count-all">0</span>
       </button>
       <button class="pill-item" data-filter="pinned">
-        <span>📌 Épinglées</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
+        <span>Épinglées</span>
         <span class="pill-badge" id="pill-count-pinned">0</span>
       </button>
       <button class="pill-item" data-filter="shared">
-        <span>👥 Partagées avec moi</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Partagées avec moi</span>
         <span class="pill-badge" id="pill-count-shared">0</span>
       </button>
       <button class="pill-item" data-filter="archived">
-        <span>🗄️ Archives</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg>
+        <span>Archives</span>
         <span class="pill-badge" id="pill-count-archived">0</span>
       </button>
     </div>
@@ -134,28 +169,24 @@
       <section id="section-pinned-wrap">
         <div class="section-headline">
           <div class="section-headline-title">
-            <span>📌</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--sync-purple)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
             <span>Notes épinglées</span>
           </div>
           <span class="section-headline-count" id="count-pinned-label">0 notes</span>
         </div>
-        <div class="cards-flow" id="pinned-notes-list">
-          <!-- Injecté dynamiquement -->
-        </div>
+        <div class="cards-flow" id="pinned-notes-list"></div>
       </section>
 
       <!-- Section Récemment modifiées -->
       <section id="section-recent-wrap">
         <div class="section-headline">
           <div class="section-headline-title">
-            <span>🕒</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <span id="recent-headline-title">Récemment modifiées</span>
           </div>
           <span class="section-see-all" id="btn-see-all-notes">Voir tout</span>
         </div>
-        <div class="cards-flow" id="recent-notes-list">
-          <!-- Injecté dynamiquement -->
-        </div>
+        <div class="cards-flow" id="recent-notes-list"></div>
       </section>
     </main>
 
@@ -171,19 +202,23 @@
           </div>
           <div style="display: flex; align-items: center; gap: 8px">
             <div class="avatar-stack-mini" id="editor-avatars-stack"></div>
-            <button class="icon-btn-ghost" id="btn-editor-collab-share" title="Partager le lien en direct">👥</button>
-            <button class="icon-btn-ghost" id="btn-editor-pin" title="Épingler">📌</button>
+            <button class="icon-btn-ghost" id="btn-editor-collab-share" title="Partager le lien en direct">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </button>
+            <button class="icon-btn-ghost" id="btn-editor-pin" title="Épingler">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
+            </button>
           </div>
         </div>
 
         <input type="text" id="editor-doc-title" class="editor-title-input" placeholder="Titre du document..." />
 
         <div class="editor-meta-row">
-          <span id="editor-save-status">⏱️ Il y a 1 min</span>
+          <span id="editor-save-status">⏱️ Synchronisé</span>
           <span>•</span>
-          <span id="editor-space-tag">📁 Espace Produit</span>
+          <span id="editor-space-tag">📁 Espace Principal</span>
           <span>•</span>
-          <span id="editor-tags-list" style="color: var(--primary)">#Stratégie #Projet</span>
+          <span id="editor-tags-list" style="color: var(--sync-purple)">#Projet</span>
         </div>
 
         <!-- Curseur et bloc d'édition -->
@@ -198,19 +233,19 @@
         <!-- Tâches prioritaires interactives dans l'éditeur -->
         <div class="section-headline" style="margin-top: 18px">
           <div class="section-headline-title">
-            <span style="color: var(--primary)">1.</span>
+            <span style="color: var(--sync-purple); font-weight: 800">1.</span>
             <span>Objectifs prioritaires</span>
           </div>
-          <button class="icon-btn-ghost" id="btn-add-editor-task" style="font-size: 1.1rem; width: 28px; height: 28px">+</button>
+          <button class="icon-btn-ghost" id="btn-add-editor-task" style="width: 28px; height: 28px; font-weight: 800; font-size: 1.1rem">+</button>
         </div>
 
-        <div class="card-checklist-box" id="editor-checklist-container">
-          <!-- Injecté dynamiquement -->
-        </div>
+        <div class="card-checklist-box" id="editor-checklist-container"></div>
 
         <!-- Note d'équipe Callout -->
         <div class="team-callout">
-          <div class="callout-icon">💡</div>
+          <div class="callout-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path></svg>
+          </div>
           <div>
             <div class="callout-title">Note d'équipe</div>
             <div class="callout-text">
@@ -227,13 +262,13 @@
           <button class="toolbar-btn" data-tool="italic">I</button>
           <button class="toolbar-btn" data-tool="check">☑</button>
           <button class="toolbar-btn" data-tool="quote">””</button>
-          <button class="toolbar-btn" data-tool="collab" id="btn-toolbar-collab" style="margin-left: auto; color: var(--primary)">👥 Lien</button>
+          <button class="toolbar-btn" data-tool="collab" id="btn-toolbar-collab" style="margin-left: auto; color: var(--sync-purple)">👥 Lien</button>
         </div>
       </div>
     </main>
 
     <!-- =================================================================== -->
-    <!-- PANNEAU 3 : VUE ESPACES (Shared Spaces)                             -->
+    <!-- PANNEAU 3 : VUE ESPACES (Shared Spaces dynamiques)                  -->
     <!-- =================================================================== -->
     <main class="view-panel" id="view-spaces">
       <div style="margin: 14px 0 16px 0; display: flex; align-items: center; justify-content: space-between">
@@ -247,177 +282,39 @@
       </div>
 
       <div class="pills-scroll-container" style="padding: 0 0 16px 0">
-        <button class="pill-item active">Tous les espaces (3)</button>
+        <button class="pill-item active" id="pill-all-spaces">Tous les espaces (<span id="spaces-count">0</span>)</button>
         <button class="pill-item">Mes espaces</button>
         <button class="pill-item">Invité</button>
       </div>
 
-      <div id="spaces-cards-list">
-        <!-- Espace 1 : Équipe Produit & Design -->
-        <div class="space-card">
-          <div class="space-card-header">
-            <div class="space-icon-title">
-              <div class="space-icon-box">🚀</div>
-              <div>
-                <div class="space-name">Équipe Produit & Design</div>
-                <div class="space-desc">Spécifications, wireframes et roadmaps</div>
-              </div>
-            </div>
-            <button class="card-options-btn">⋮</button>
-          </div>
-          <div class="space-badges-row">
-            <span>📄 <strong id="space-notes-count-1">3</strong> notes</span>
-            <span>•</span>
-            <span>👥 <strong>6</strong> membres actifs</span>
-          </div>
-          <div class="space-action-bar">
-            <div class="avatar-stack-mini">
-              <div class="mini-avatar" style="background: #fed7aa; color: #9a3412">T</div>
-              <div class="mini-avatar" style="background: #bbf7d0; color: #166534">S</div>
-              <div class="mini-avatar" style="background: #e9d5ff; color: #6b21a8">M</div>
-              <div class="mini-avatar badge-more">+3</div>
-            </div>
-            <button class="pill-item" style="padding: 4px 10px; font-size: 0.75rem" onclick="openCollabForCurrentNote()">
-              + Inviter
-            </button>
-          </div>
-        </div>
-
-        <!-- Espace 2 : Studio Créatif & Marketing -->
-        <div class="space-card accent-red">
-          <div class="space-card-header">
-            <div class="space-icon-title">
-              <div class="space-icon-box">💡</div>
-              <div>
-                <div class="space-name">Studio Créatif & Marketing</div>
-                <div class="space-desc">Campagnes, contenus et identité visuelle</div>
-              </div>
-            </div>
-            <button class="card-options-btn">⋮</button>
-          </div>
-          <div class="space-badges-row">
-            <span>📄 <strong>15</strong> notes</span>
-            <span>•</span>
-            <span>👥 <strong>4</strong> membres</span>
-          </div>
-          <div class="space-action-bar">
-            <div class="avatar-stack-mini">
-              <div class="mini-avatar" style="background: #fbcfe8; color: #9d174d">A</div>
-              <div class="mini-avatar" style="background: #c7d2fe; color: #3730a3">H</div>
-              <div class="mini-avatar badge-more">+2</div>
-            </div>
-            <button class="pill-item" style="padding: 4px 10px; font-size: 0.75rem" onclick="openCollabForCurrentNote()">
-              + Inviter
-            </button>
-          </div>
-        </div>
-
-        <!-- Espace 3 : Maison & Projets Perso -->
-        <div class="space-card accent-green">
-          <div class="space-card-header">
-            <div class="space-icon-title">
-              <div class="space-icon-box">🏡</div>
-              <div>
-                <div class="space-name">Maison & Projets Perso</div>
-                <div class="space-desc">Budget partagé, voyages et to-do listes</div>
-              </div>
-            </div>
-            <button class="card-options-btn">⋮</button>
-          </div>
-          <div class="space-badges-row">
-            <span>📄 <strong>8</strong> notes</span>
-            <span>•</span>
-            <span>👥 <strong>2</strong> membres</span>
-          </div>
-          <div class="space-action-bar">
-            <div class="avatar-stack-mini">
-              <div class="mini-avatar" style="background: #fed7aa; color: #9a3412">O</div>
-              <div class="mini-avatar" style="background: #d9f99d; color: #3f6212">M</div>
-            </div>
-            <button class="pill-item" style="padding: 4px 10px; font-size: 0.75rem" onclick="openCollabForCurrentNote()">
-              + Partager
-            </button>
-          </div>
-        </div>
-      </div>
+      <div id="spaces-cards-list"></div>
     </main>
 
     <!-- =================================================================== -->
-    <!-- PANNEAU 4 : VUE ACTIVITÉ (Activity Feed en temps réel)              -->
+    <!-- PANNEAU 4 : VUE ACTIVITÉ (Activity Feed réel de l'utilisateur)      -->
     <!-- =================================================================== -->
     <main class="view-panel" id="view-activity">
       <div style="margin: 14px 0 14px 0; display: flex; align-items: center; justify-content: space-between">
         <div>
           <h2 style="font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em">Activité Récente</h2>
-          <p style="font-size: 0.8rem; color: var(--text-muted)">Historique en temps réel des modifications</p>
+          <p style="font-size: 0.8rem; color: var(--text-muted)">Historique en direct de vos modifications</p>
         </div>
       </div>
 
       <div class="pills-scroll-container" style="padding: 0 0 14px 0">
-        <button class="pill-item active">Tout (5)</button>
+        <button class="pill-item active">Tout (<span id="activity-count">0</span>)</button>
         <button class="pill-item">@ Mentions</button>
         <button class="pill-item">Modifications</button>
       </div>
 
-      <div id="activity-feed-list">
-        <!-- Activité 1 -->
-        <div class="activity-card">
-          <div class="activity-header">
-            <div class="activity-user-row">
-              <div class="activity-avatar">T</div>
-              <div>
-                <div class="activity-title">Thomas R. a modifié</div>
-                <div class="activity-subtitle">📄 Roadmap Produit Q3</div>
-              </div>
-            </div>
-            <span class="activity-time">Il y a 12m</span>
-          </div>
-          <div class="activity-diff-box">
-            <span style="color: var(--sync-green); font-weight: 700">+ Ajout :</span> Ajout de la section MVP et échéances pour le déploiement multi-région.
-          </div>
-        </div>
-
-        <!-- Activité 2 : Mention -->
-        <div class="activity-card activity-mention">
-          <div class="activity-header">
-            <div class="activity-user-row">
-              <div class="activity-avatar" style="background: #fbcfe8; color: #9d174d">S</div>
-              <div>
-                <div class="activity-title">Sarah M. vous a mentionné</div>
-                <div class="activity-subtitle">📋 Revue Sprint 14</div>
-              </div>
-            </div>
-            <span class="activity-time">Il y a 1h</span>
-          </div>
-          <div class="activity-diff-box">
-            <span style="color: #ef4444; font-weight: 700">@Vous :</span> Peux-tu valider ce point de sécurité avant ce soir ? Les équipes mobiles attendent notre feu vert.
-          </div>
-        </div>
-
-        <!-- Activité 3 : Espace rejoint -->
-        <div class="activity-card">
-          <div class="activity-header">
-            <div class="activity-user-row">
-              <div class="activity-avatar" style="background: #bbf7d0; color: #166534">M</div>
-              <div>
-                <div class="activity-title">Marc V. a rejoint l'espace</div>
-                <div class="activity-subtitle">🚀 Équipe Produit & Design</div>
-              </div>
-            </div>
-            <span class="activity-time">Il y a 3h</span>
-          </div>
-          <div class="activity-diff-box">
-            🛡️ Rôle attribué : <strong>Éditeur</strong>
-          </div>
-        </div>
-      </div>
+      <div id="activity-feed-list"></div>
     </main>
 
     <!-- =================================================================== -->
     <!-- FLOATING ACTION BUTTON "+ Nouvelle" (FAB)                           -->
     <!-- =================================================================== -->
     <button class="fab-new-note" id="btn-fab-new-note">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
@@ -425,50 +322,66 @@
     </button>
 
     <!-- =================================================================== -->
-    <!-- BARRE DE NAVIGATION INFÉRIEURE (4 Onglets)                          -->
+    <!-- BARRE DE NAVIGATION INFÉRIEURE AVEC SVG ICONS EXACTS                -->
     <!-- =================================================================== -->
     <nav class="bottom-nav">
       <button class="nav-tab-btn active" data-tab="notes">
-        <span class="tab-icon">📄</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
         <span>Notes</span>
       </button>
+
       <button class="nav-tab-btn" data-tab="editor">
-        <span class="tab-icon">✍️</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
         <span>Éditeur</span>
       </button>
+
       <button class="nav-tab-btn" data-tab="spaces">
-        <span class="tab-icon">🗂️</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+        </svg>
         <span>Espaces</span>
       </button>
+
       <button class="nav-tab-btn" data-tab="activity">
-        <span class="tab-icon">🔔</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
         <span>Activité</span>
-        <span class="nav-tab-badge"></span>
       </button>
     </nav>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- MODAL : LIEN DE COLLABORATION & INVITATION TEMPS RÉEL                 -->
+  <!-- MODALE : LIEN DE COLLABORATION TEMPS RÉEL                             -->
   <!-- ===================================================================== -->
   <div id="modal-collab" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>👥 Collaborer en direct</h3>
+        <h3 style="font-size: 1.1rem; font-weight: 800">👥 Collaborer en direct</h3>
         <button class="icon-btn-ghost" data-close-modal="modal-collab">✕</button>
       </div>
       <div>
         <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5">
-          Toute personne ouvrant ce lien rejoint cette note en direct, ses modifications s'affichent instantanément et la note s'ajoute à ses notes partagées.
+          Partagez ce lien avec d'autres personnes connectées. Elles rejoignent instantanément cette note, leurs changements s'affichent en temps réel et la note s'ajoute à leurs notes partagées.
         </p>
         <div class="share-url-box">
           <input type="text" id="collab-share-url-input" readonly />
-          <button id="btn-copy-collab-url" class="btn-primary-sm">📋 Copier</button>
+          <button id="btn-copy-collab-url" class="btn-primary-sm">Copier</button>
         </div>
 
         <div style="margin-top: 18px">
           <h4 style="font-size: 0.88rem; font-weight: 800; margin-bottom: 8px">
-            Participants connectés (<span id="collab-participants-count">0</span>)
+            Participants sur cette note (<span id="collab-participants-count">0</span>)
           </h4>
           <div id="collab-participants-list" style="display: flex; flex-direction: column; gap: 8px"></div>
         </div>
@@ -482,6 +395,6 @@
   <!-- Conteneur Toasts -->
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="/app.js?v=4.0.0"></script>
+  <script src="/app.js?v=5.0.0"></script>
 </body>
 </html>

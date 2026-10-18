@@ -227,7 +227,7 @@ app.get('/api/public/notes/:token', (req, res) => {
 });
 
 // =============================================================================
-// API DOSSIERS (PROTÉGÉES SSO)
+// API DOSSIERS & ESPACES (PROTÉGÉES SSO)
 // =============================================================================
 app.get('/api/folders', requireAuth, (req, res) => {
   const userId = getUserId(req);
@@ -248,6 +248,11 @@ app.delete('/api/folders/:id', requireAuth, (req, res) => {
   const userId = getUserId(req);
   const folders = Storage.deleteFolder(userId, req.params.id);
   res.json({ success: true, folders });
+});
+
+app.get('/api/activities', requireAuth, (req, res) => {
+  const userId = getUserId(req);
+  res.json(Storage.getActivities(userId));
 });
 
 // =============================================================================
@@ -316,6 +321,15 @@ app.put('/api/notes/:id', requireAuth, (req, res) => {
     const user = req.session?.user;
     const saved = Storage.saveNote(userId, { ...req.body, id: req.params.id }, user);
     
+    // Enregistrer l'activité réelle de l'utilisateur
+    Storage.recordActivity(userId, {
+      type: 'modification',
+      title: `${user ? (user.name || user.email) : 'Vous'} avez modifié`,
+      noteTitle: saved.title || 'Note',
+      userName: user ? (user.name || user.email) : 'Vous',
+      diff: saved.content ? (saved.content.slice(0, 100) + (saved.content.length > 100 ? '...' : '')) : 'Contenu mis à jour'
+    });
+
     // Si la note a un lien de collaboration actif, diffuser l'événement
     if (saved.collabToken) {
       notifyCollabClients(saved.collabToken, 'note_updated', {

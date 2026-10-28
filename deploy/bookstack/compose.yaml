@@ -1,0 +1,56 @@
+services:
+  bookstack:
+    image: ${BOOKSTACK_IMAGE:?Set a tested LinuxServer BookStack image tag or digest}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Europe/Paris
+      APP_URL: ${APP_URL:?Set the HTTPS URL}
+      APP_KEY: ${APP_KEY:?Generate and preserve a BookStack APP_KEY}
+      APP_DEBUG: "false"
+      APP_LANG: fr
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_DATABASE: bookstack
+      DB_USERNAME: bookstack
+      DB_PASSWORD: ${DB_PASSWORD:?Set a new database password}
+      AUTH_METHOD: oidc
+      AUTH_AUTO_INITIATE: "true"
+      OIDC_NAME: Oussamma SSO
+      OIDC_ISSUER: ${OIDC_ISSUER:?Use the exact discovery issuer}
+      OIDC_ISSUER_DISCOVER: "true"
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?Register a dedicated confidential client}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?Set the new client secret}
+      OIDC_DISPLAY_NAME_CLAIMS: name
+      OIDC_EXTERNAL_ID_CLAIM: sub
+      OIDC_END_SESSION_ENDPOINT: "false"
+      OIDC_USER_TO_GROUPS: "false"
+      OIDC_FETCH_AVATAR: "false"
+      OIDC_DUMP_USER_DETAILS: "false"
+    expose:
+      - "80"
+    volumes:
+      - bookstack-config:/config
+  database:
+    image: ${MARIADB_IMAGE:?Set a tested supported MariaDB image tag or digest}
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: bookstack
+      MARIADB_USER: bookstack
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set a new database password}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set a different root password}
+    volumes:
+      - bookstack-database:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+volumes:
+  bookstack-config:
+  bookstack-database:

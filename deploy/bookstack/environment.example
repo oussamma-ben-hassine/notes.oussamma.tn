@@ -1,0 +1,12 @@
+# Enter these values as secrets/variables in Coolify, not in Git.
+# Select currently supported releases; validate and pin their immutable digests.
+BOOKSTACK_IMAGE=
+MARIADB_IMAGE=
+APP_URL=https://notes.oussamma.tn
+APP_KEY=
+DB_PASSWORD=
+DB_ROOT_PASSWORD=
+# Verify against the live discovery response (including any trailing slash).
+OIDC_ISSUER=https://sso-a.oussamma.tn
+OIDC_CLIENT_ID=
+OIDC_CLIENT_SECRET=
